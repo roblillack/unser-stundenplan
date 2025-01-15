@@ -3,6 +3,7 @@ import "./App.css";
 import { getTimeTables, type Lesson, type SubjectList } from "./api";
 
 const REFRESH_INTERVAL_MS = 1000 * 60 * 15;
+// const REFRESH_INTERVAL_MS = 1000 * 30;
 
 interface MergedTimeTable {
 	// Formatted date, the timetable is for. Format: "YYYY-MM-DD"
@@ -117,7 +118,11 @@ function useWakeLock() {
 }
 
 function App() {
+	const [state, setState] = useState<"nodata" | "loading" | "loaded" | "error">(
+		"nodata",
+	);
 	const [timetable, setTimetable] = useState<MergedTimeTable | undefined>();
+
 	useVisibilityChange(
 		(isVisible) => {
 			if (
@@ -125,25 +130,27 @@ function App() {
 				(!timetable ||
 					timetable.updated.getTime() < Date.now() - REFRESH_INTERVAL_MS)
 			) {
-				setTimetable(undefined);
+				setState("nodata");
 			}
 		},
 		[timetable],
 	);
 	useEffect(() => {
 		async function fetchData() {
+			setState("loading");
 			const d = getValidDate();
 			setTimetable(mergeSubjectLists(d, await getTimeTables(d)));
 
 			setTimeout(() => {
-				setTimetable(undefined);
+				setState("nodata");
 			}, REFRESH_INTERVAL_MS);
+			setState("loaded");
 		}
 
-		if (!timetable) {
+		if (!timetable || state !== "loaded") {
 			fetchData();
 		}
-	}, [timetable]);
+	}, [timetable, state]);
 	useWakeLock();
 
 	return (
@@ -160,53 +167,63 @@ function App() {
 						day: "numeric",
 					})}
 			</h2>
-			<table className="timetable">
-				<thead>
-					<tr>
-						<th>Stunde</th>
-						{timetable?.classNames.map((x) => (
-							<th key={x}>{x}</th>
-						))}
-					</tr>
-				</thead>
-				<tbody>
-					{timetable?.hours.map((hour) => (
-						<tr key={hour.hour}>
-							<td className="hour" key="hour">
-								{hour.hour}
-							</td>
-							{hour.subjects.map((subject, idx) => (
-								<td
-									className={`subject ${subject?.status === "canceled" ? "cancelled" : ""}`}
-									key={`${timetable?.classNames[idx]}-${hour.hour}`}
-								>
-									{subject && (
-										<>
-											<b>
-												{subject.status === "canceled" ? (
-													<s>{subjectName(subject)}</s>
-												) : (
-													subjectName(subject)
-												)}
-											</b>
-											<br />
-											{subject.teachers
-												.map((x) => `${x.forename} ${x.name}`)
-												.join("/")}{" "}
-											<br />
-											<small>
-												Raum {subject.rooms.map((x) => x.local_id).join("/")}
-											</small>
-										</>
-									)}
-								</td>
+			{timetable && (
+				<table className="timetable">
+					<thead>
+						<tr>
+							<th>Stunde</th>
+							{timetable?.classNames.map((x) => (
+								<th key={x}>{x}</th>
 							))}
 						</tr>
-					))}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{timetable?.hours.map((hour) => (
+							<tr key={hour.hour}>
+								<td className="hour" key="hour">
+									{hour.hour}
+								</td>
+								{hour.subjects.map((subject, idx) => (
+									<td
+										className={`subject ${subject?.status === "canceled" ? "cancelled" : ""}`}
+										key={`${timetable?.classNames[idx]}-${hour.hour}`}
+									>
+										{subject && (
+											<>
+												<b>
+													{subject.status === "canceled" ? (
+														<s>{subjectName(subject)}</s>
+													) : (
+														subjectName(subject)
+													)}
+												</b>
+												<br />
+												{subject.teachers
+													.map((x) => `${x.forename} ${x.name}`)
+													.join("/")}{" "}
+												<br />
+												<small>
+													Raum {subject.rooms.map((x) => x.local_id).join("/")}
+												</small>
+											</>
+										)}
+									</td>
+								))}
+							</tr>
+						))}
+					</tbody>
+				</table>
+			)}
 			<p className="footer">
-				Zuletzt aktualisiert: {timetable?.updated.toLocaleString()}
+				{timetable &&
+					`Zuletzt aktualisiert: ${timetable.updated.toLocaleString([], {
+						day: "2-digit",
+						month: "2-digit",
+						year: "numeric",
+						hour: "2-digit",
+						minute: "2-digit",
+					})}`}
+				{state === "loading" && <>{" lade... "}</>}
 			</p>
 		</>
 	);
