@@ -118,10 +118,28 @@ function useWakeLock() {
 }
 
 function App() {
+	const [apiToken, setApiToken] = useState("");
 	const [state, setState] = useState<"nodata" | "loading" | "loaded" | "error">(
 		"nodata",
 	);
 	const [timetable, setTimetable] = useState<MergedTimeTable | undefined>();
+
+	useEffect(() => {
+		if (!apiToken) {
+			const storedToken = window.localStorage.getItem("apiToken");
+			if (storedToken) {
+				setApiToken(storedToken);
+				return;
+			}
+			const t = window.prompt(
+				"Bitte hier den API-Token für “Beste Schule” eintragen",
+			);
+			if (t) {
+				window.localStorage.setItem("apiToken", t);
+				setApiToken(t);
+			}
+		}
+	}, [apiToken]);
 
 	useVisibilityChange(
 		(isVisible) => {
@@ -136,10 +154,14 @@ function App() {
 		[timetable],
 	);
 	useEffect(() => {
+		if (!apiToken) {
+			return;
+		}
+
 		async function fetchData() {
 			setState("loading");
 			const d = getValidDate();
-			setTimetable(mergeSubjectLists(d, await getTimeTables(d)));
+			setTimetable(mergeSubjectLists(d, await getTimeTables(apiToken, d)));
 
 			setTimeout(() => {
 				setState("nodata");
@@ -150,7 +172,7 @@ function App() {
 		if (!timetable || state !== "loaded") {
 			fetchData();
 		}
-	}, [timetable, state]);
+	}, [apiToken, timetable, state]);
 	useWakeLock();
 
 	return (

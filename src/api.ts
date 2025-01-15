@@ -1,6 +1,3 @@
-const API_TOKEN =
-	"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxMiIsImp0aSI6ImExNGYyNmM5M2Q4NDA4NTVhMjQ1ZmY5MjRjYzQ3MDZjNTZhNTRmYWJmZjIzYTljYTY0MTAxMjJkZWI4MWZhN2U3NGNiMDJlMDM5MDBhZDQ2IiwiaWF0IjoxNzM2NzYxODAyLjE3OTQxMSwibmJmIjoxNzM2NzYxODAyLjE3OTQxMywiZXhwIjoxNzY4Mjk3ODAyLjE3NzU2MSwic3ViIjoiMTg4MTgzIiwic2NvcGVzIjpbXX0.tNEhE0txTwGNFt3UVZl3BUaro9XoQnpEPXBovTghyHG0hy-3KjQHZb3Jzr72jvFkm9XwwGDEps7HU7i35MZ65oKg4YB-ExcIqdYRkmz6W3yQLcbvhptKfKcGFDiDDtieumE76bEHquswZ4dbrFR2CPRw0U5aFo7J6-c0YMOS7OUUD9rPZCLSbg-cDWkMNwMCHv7YpeqDdXDaNx4azrz2vADWlOv8MDA4Ld1TlymWbWvXIQVjxcMPU2NNtk-Al8GAznAWVboHJoGeGuoBStBRBdIGfeHDNL5HNYmO6J12WTBUk4gajlZK8ZvZioafcf1fR2OVkPzV30e1xZEncZbHtVGR2n64hw8xH7LCJPsz1HR7bxXelCI7sATV1fGt6XH5-ZDpAYGyXLG661tLILpi_jVacsSRXsDdBzH1vptMIpts4YTGKJ4_6BDOMWrhpmOvOyQY_eFjNATI8iCXre8xMylbbwnAfUCr8xSYEeNctmH5tWop5kXTs9lmJl0WwKYlYKiZw-F2Naloq3pufHlFFt39nJoOHl2pQGtRimwRrcTPtR4bpSREnK3R0xAeBSJHTlKrD3CN6CTUz7v93wUgfLBwc7Zsqf4tOIgb6g1fWp8Rjw2nuJ0gBBfSebmVGPp4-dHA4iBAioo7T7p3NMxhGlyin-vpOpBZQUsDbRF4Nsw";
-
 export interface WeekJournalReply {
 	data: {
 		days: Day[];
@@ -50,11 +47,11 @@ export interface SubjectList {
 	subjects: Lesson[];
 }
 
-export function get<T>(path: string): Promise<T> {
+export function get<T>(apiToken: string, path: string): Promise<T> {
 	const url = new URL(`https://beste.schule/api/${path}`);
 
 	const headers = {
-		Authorization: `Bearer ${API_TOKEN}`,
+		Authorization: `Bearer ${apiToken}`,
 		"Content-Type": "application/json",
 		Accept: "application/json",
 	};
@@ -90,10 +87,14 @@ function calcIsoYear(date: Date): number {
 	return dt.getFullYear();
 }
 
-export function getTimeTables(date: Date): Promise<SubjectList[]> {
+export function getTimeTables(
+	apiToken: string,
+	date: Date,
+): Promise<SubjectList[]> {
 	const isoWeek = `${calcIsoYear(date)}-${calcIsoWeek(date)}`;
 
 	return get<WeekJournalReply>(
+		apiToken,
 		`journal/weeks/${isoWeek}?include=days.lessons&interpolate=true`,
 	).then((response) => {
 		const lessonsByLevel: Record<number, Lesson[]> = {};
