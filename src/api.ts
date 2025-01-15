@@ -1,5 +1,3 @@
-const API_TOKEN = "xxx";
-
 export interface WeekJournalReply {
 	data: {
 		days: Day[];
@@ -49,11 +47,11 @@ export interface SubjectList {
 	subjects: Lesson[];
 }
 
-export function get<T>(path: string): Promise<T> {
+export function get<T>(apiToken: string, path: string): Promise<T> {
 	const url = new URL(`https://beste.schule/api/${path}`);
 
 	const headers = {
-		Authorization: `Bearer ${API_TOKEN}`,
+		Authorization: `Bearer ${apiToken}`,
 		"Content-Type": "application/json",
 		Accept: "application/json",
 	};
@@ -89,10 +87,14 @@ function calcIsoYear(date: Date): number {
 	return dt.getFullYear();
 }
 
-export function getTimeTables(date: Date): Promise<SubjectList[]> {
+export function getTimeTables(
+	apiToken: string,
+	date: Date,
+): Promise<SubjectList[]> {
 	const isoWeek = `${calcIsoYear(date)}-${calcIsoWeek(date)}`;
 
 	return get<WeekJournalReply>(
+		apiToken,
 		`journal/weeks/${isoWeek}?include=days.lessons&interpolate=true`,
 	).then((response) => {
 		const lessonsByLevel: Record<number, Lesson[]> = {};
