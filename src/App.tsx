@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import { getTimeTables, type Lesson, type SubjectList } from "./api";
 
+const REFRESH_INTERVAL_MS = 1000 * 60 * 15;
+
 interface MergedTimeTable {
 	// Formatted date, the timetable is for. Format: "YYYY-MM-DD"
 	date: string;
@@ -76,26 +78,73 @@ function getValidDate(): Date {
 	return d;
 }
 
+function useVisibilityChange(
+	callback: (isVisible: boolean) => void,
+	deps: unknown[],
+) {
+	useEffect(() => {
+		const handler = () => {
+			callback(document.visibilityState === "visible");
+		};
+
+		document.addEventListener("visibilitychange", handler);
+		return () => {
+			document.removeEventListener("visibilitychange", handler);
+		};
+	}, [callback, ...deps]);
+}
+
+function useWakeLock() {
+	useEffect(() => {
+		let wakeLock: WakeLockSentinel | null = null;
+
+		async function requestWakeLock() {
+			try {
+				wakeLock = await navigator.wakeLock.request("screen");
+			} catch (e) {
+				console.error(e);
+			}
+		}
+
+		requestWakeLock();
+
+		return () => {
+			if (wakeLock) {
+				wakeLock.release();
+			}
+		};
+	}, []);
+}
+
 function App() {
 	const [timetable, setTimetable] = useState<MergedTimeTable | undefined>();
-
+	useVisibilityChange(
+		(isVisible) => {
+			if (
+				isVisible &&
+				(!timetable ||
+					timetable.updated.getTime() < Date.now() - REFRESH_INTERVAL_MS)
+			) {
+				setTimetable(undefined);
+			}
+		},
+		[timetable],
+	);
 	useEffect(() => {
 		async function fetchData() {
 			const d = getValidDate();
 			setTimetable(mergeSubjectLists(d, await getTimeTables(d)));
 
-			setTimeout(
-				() => {
-					setTimetable(undefined);
-				},
-				1000 * 60 * 15,
-			);
+			setTimeout(() => {
+				setTimetable(undefined);
+			}, REFRESH_INTERVAL_MS);
 		}
 
 		if (!timetable) {
 			fetchData();
 		}
 	}, [timetable]);
+	useWakeLock();
 
 	return (
 		<>
