@@ -3,14 +3,17 @@
    aria-hidden="true"
    role="img"
    class="iconify iconify--logos"
-   width="31.88"
+   width="32"
    height="32"
-   preserveAspectRatio="xMidYMid meet"
-   viewBox="0 0 256 257"
+   preserveAspectRatio="xMidYMid"
+   viewBox="0 0 256.96362 257"
    version="1.1"
    id="svg6"
-   sodipodi:docname="vite.svg"
+   sodipodi:docname="favicon.svg"
    inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   inkscape:export-filename="apple-touch-icon.png"
+   inkscape:export-xdpi="1170.2858"
+   inkscape:export-ydpi="1170.2858"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -30,17 +33,17 @@
      inkscape:window-width="1864"
      inkscape:window-height="1209"
      inkscape:window-x="485"
-     inkscape:window-y="139"
+     inkscape:window-y="111"
      inkscape:window-maximized="0"
      inkscape:current-layer="svg6" />
   <defs
      id="defs5">
     <linearGradient
        id="IconifyId1813088fe1fbc01fb466"
-       x1="-.828%"
-       x2="57.636%"
-       y1="7.652%"
-       y2="78.411%">
+       x1="-0.0082799997"
+       x2="0.57635999"
+       y1="0.076519996"
+       y2="0.78411001">
       <stop
          offset="0%"
          stop-color="#41D1FF"
@@ -52,10 +55,10 @@
     </linearGradient>
     <linearGradient
        id="IconifyId1813088fe1fbc01fb467"
-       x1="43.376%"
-       x2="50.316%"
-       y1="2.242%"
-       y2="89.03%">
+       x1="0.43375999"
+       x2="0.50316"
+       y1="0.02242"
+       y2="0.89029998">
       <stop
          offset="0%"
          stop-color="#FFEA83"
