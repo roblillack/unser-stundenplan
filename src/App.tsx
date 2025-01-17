@@ -65,7 +65,7 @@ function mergeSubjectLists(
 }
 
 function subjectName(subject: Lesson): string {
-	if (subject.subject.name.length > 10) {
+	if (subject.subject.name.length >= 15) {
 		return subject.subject.local_id;
 	}
 	return subject.subject.name;
