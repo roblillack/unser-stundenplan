@@ -1,9 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import { getTimeTables, type Lesson, type SubjectList } from "./api";
 
-const REFRESH_INTERVAL_MS = 1000 * 60 * 15;
-// const REFRESH_INTERVAL_MS = 1000 * 30;
+// Update the timetable every 7 minutes
+const REFRESH_INTERVAL_MS = 1000 * 60 * 7;
+// const REFRESH_INTERVAL_MS = 1000 * 10;
+
+// Every 6 hours, reload the page to get the latest version of the app
+const RELOAD_INTERVAL_MS = 1000 * 60 * 60 * 6;
+// const RELOAD_INTERVAL_MS = 1000 * 30;
 
 interface MergedTimeTable {
 	// Formatted date, the timetable is for. Format: "YYYY-MM-DD"
@@ -79,49 +84,37 @@ function getValidDate(): Date {
 	return d;
 }
 
-function useVisibilityChange(
-	callback: (isVisible: boolean) => void,
-	deps: unknown[],
-) {
-	useEffect(() => {
-		const handler = () => {
-			callback(document.visibilityState === "visible");
-		};
+type State = "initial" | "loading" | "loaded" | "error";
 
-		document.addEventListener("visibilitychange", handler);
-		return () => {
-			document.removeEventListener("visibilitychange", handler);
-		};
-	}, [callback, ...deps]);
-}
+function StateDisplay({
+	state,
+	onClick,
+}: {
+	state: State;
+	onClick: () => void;
+}) {
+	if (state === "initial" || state === "loading") {
+		return "Lade …";
+	}
 
-function useWakeLock() {
-	useEffect(() => {
-		let wakeLock: WakeLockSentinel | null = null;
-
-		async function requestWakeLock() {
-			try {
-				wakeLock = await navigator.wakeLock.request("screen");
-			} catch (e) {
-				console.error(e);
-			}
-		}
-
-		requestWakeLock();
-
-		return () => {
-			if (wakeLock) {
-				wakeLock.release();
-			}
-		};
-	}, []);
+	return (
+		<>
+			{state === "error" ? "Fehler! " : ""}
+			<button
+				className="linkbutton"
+				type="button"
+				onClick={onClick}
+				disabled={!(state === "loaded" || state === "error")}
+			>
+				Aktualisieren
+			</button>
+		</>
+	);
 }
 
 function App() {
 	const [apiToken, setApiToken] = useState("");
-	const [state, setState] = useState<"nodata" | "loading" | "loaded" | "error">(
-		"nodata",
-	);
+	const [state, setState] = useState<State>("initial");
 	const [timetable, setTimetable] = useState<MergedTimeTable | undefined>();
 
 	useEffect(() => {
@@ -141,39 +134,34 @@ function App() {
 		}
 	}, [apiToken]);
 
-	useVisibilityChange(
-		(isVisible) => {
-			if (
-				isVisible &&
-				(!timetable ||
-					timetable.updated.getTime() < Date.now() - REFRESH_INTERVAL_MS)
-			) {
-				setState("nodata");
-			}
-		},
-		[timetable],
-	);
-	useEffect(() => {
+	const updateTimetable = useCallback(async () => {
 		if (!apiToken) {
 			return;
 		}
 
-		async function fetchData() {
-			setState("loading");
-			const d = getValidDate();
-			setTimetable(mergeSubjectLists(d, await getTimeTables(apiToken, d)));
+		setState("loading");
 
-			setTimeout(() => {
-				setState("nodata");
-			}, REFRESH_INTERVAL_MS);
-			setState("loaded");
-		}
+		const d = getValidDate();
+		getTimeTables(apiToken, d)
+			.then((timetables) => {
+				setTimetable(mergeSubjectLists(d, timetables));
+				setState("loaded");
+			})
+			.catch(() => {
+				setState("error");
+			});
+	}, [apiToken]);
 
-		if (!timetable || state !== "loaded") {
-			fetchData();
-		}
-	}, [apiToken, timetable, state]);
-	useWakeLock();
+	useEffect(() => {
+		const h = setInterval(updateTimetable, REFRESH_INTERVAL_MS);
+		updateTimetable();
+		return () => clearInterval(h);
+	}, [updateTimetable]);
+
+	useEffect(() => {
+		const h = setInterval(() => location.reload(), RELOAD_INTERVAL_MS);
+		return () => clearInterval(h);
+	}, []);
 
 	return (
 		<>
@@ -244,8 +232,8 @@ function App() {
 						year: "numeric",
 						hour: "2-digit",
 						minute: "2-digit",
-					})}`}
-				{state === "loading" && <>{" lade... "}</>}
+					})} — `}
+				<StateDisplay state={state} onClick={updateTimetable} />
 			</p>
 		</>
 	);

@@ -45,6 +45,23 @@ h2 {
   color: #888;
 }
 
+button.linkbutton {
+  /* Make this look like a link instead of a button */
+  background: none;
+  border: none;
+  color: blue;
+  text-decoration: underline;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  display: inline;
+
+  &[disabled] {
+    color: #888;
+    cursor: not-allowed;
+  }
+}
+
 @media (max-width: 700px) {
   #root {
     padding: 0.5rem;
