@@ -132,7 +132,7 @@ function App() {
 		const d = nextValidDate();
 		getTimeTables(apiToken, d)
 			.then((timetables) => {
-				setTimetable(mergeSubjectLists(d, timetables));
+				setTimetable(mergeSubjectLists(formatDate(d), timetables));
 				setState("loaded");
 			})
 			.catch(() => {
