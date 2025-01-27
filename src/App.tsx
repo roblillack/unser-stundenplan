@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import { getTimeTables, type Lesson, type SubjectList } from "./api";
+import { type DateString, formatDate, nextValidDate } from "./dates";
 
 // Update the timetable every 7 minutes
 const REFRESH_INTERVAL_MS = 1000 * 60 * 7;
@@ -27,13 +28,13 @@ interface MergedTimeTable {
 }
 
 function mergeSubjectLists(
-	date: Date,
+	dateStr: DateString,
 	timetables: SubjectList[],
 ): MergedTimeTable {
-	const dateStr = date.toISOString().substring(0, 10);
+	// const dateStr = date.toISOString().substring(0, 10);
 	const r: MergedTimeTable = {
 		date: dateStr,
-		isToday: dateStr === new Date().toISOString().substring(0, 10),
+		isToday: dateStr === formatDate(new Date()),
 		classNames: [],
 		hours: [],
 		lastHour: -1,
@@ -69,19 +70,6 @@ function subjectName(subject: Lesson): string {
 		return subject.subject.local_id;
 	}
 	return subject.subject.name;
-}
-
-function getValidDate(): Date {
-	const d = new Date();
-	if (d.getHours() >= 17) {
-		d.setDate(d.getDate() + 1);
-	}
-
-	while (d.getDay() === 0 || d.getDay() === 6) {
-		d.setDate(d.getDate() + 1);
-	}
-
-	return d;
 }
 
 type State = "initial" | "loading" | "loaded" | "error";
@@ -141,7 +129,7 @@ function App() {
 
 		setState("loading");
 
-		const d = getValidDate();
+		const d = nextValidDate();
 		getTimeTables(apiToken, d)
 			.then((timetables) => {
 				setTimetable(mergeSubjectLists(d, timetables));

@@ -1,3 +1,5 @@
+import { calcIsoWeek, calcIsoYear, formatDate } from "./dates";
+
 export interface WeekJournalReply {
 	data: {
 		days: Day[];
@@ -62,31 +64,6 @@ export function get<T>(apiToken: string, path: string): Promise<T> {
 	}).then((response) => response.json());
 }
 
-function calcIsoWeek(date: Date): number {
-	const dt = new Date(date.valueOf());
-	dt.setHours(0, 0, 0, 0);
-	// Thursday in current week decides the year.
-	dt.setDate(dt.getDate() + 3 - ((dt.getDay() + 6) % 7));
-	// January 4 is always in week 1.
-	const week1 = new Date(dt.getFullYear(), 0, 4);
-	// Adjust to Thursday in week 1 and count number of weeks from date to week1.
-	return (
-		1 +
-		Math.round(
-			((date.getTime() - week1.getTime()) / 86400000 -
-				3 +
-				((week1.getDay() + 6) % 7)) /
-				7,
-		)
-	);
-}
-
-function calcIsoYear(date: Date): number {
-	const dt = new Date(date.getTime());
-	dt.setDate(dt.getDate() + 3 - ((dt.getDay() + 6) % 7));
-	return dt.getFullYear();
-}
-
 export function getTimeTables(
 	apiToken: string,
 	date: Date,
@@ -100,7 +77,7 @@ export function getTimeTables(
 		const lessonsByLevel: Record<number, Lesson[]> = {};
 		const namesByLevel: Record<number, string> = {};
 		for (const day of response.data.days) {
-			if (day.date !== date.toISOString().slice(0, 10)) {
+			if (day.date !== formatDate(date)) {
 				continue;
 			}
 			for (const lesson of day.lessons) {
