@@ -66,9 +66,10 @@ function mergeSubjectLists(
 }
 
 function subjectName(subject: Lesson): string {
-	if (subject.subject.name.length >= 15) {
+	if (!subject.subject.name || subject.subject.name.length >= 15) {
 		return subject.subject.local_id;
 	}
+
 	return subject.subject.name;
 }
 
@@ -200,9 +201,12 @@ function App() {
 													.map((x) => `${x.forename} ${x.name}`)
 													.join("/")}{" "}
 												<br />
-												<small>
-													Raum {subject.rooms.map((x) => x.local_id).join("/")}
-												</small>
+												{subject.rooms.length > 0 && (
+													<small>
+														Raum{" "}
+														{subject.rooms.map((x) => x.local_id).join("/")}
+													</small>
+												)}
 											</>
 										)}
 									</td>
