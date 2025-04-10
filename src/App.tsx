@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import "./App.css";
-import { getTimeTables, type Lesson, type SubjectList } from "./api";
+import { getTimeTables, type Time, type TimeTable, type Lesson } from "./api";
 import { type DateString, formatDate, nextValidDate } from "./dates";
 
 // Update the timetable every 7 minutes
@@ -20,6 +20,7 @@ interface MergedTimeTable {
 	classNames: string[];
 	hours: {
 		hour: number;
+		time?: Time;
 		subjects: (Lesson | null)[];
 	}[];
 	lastHour: number;
@@ -29,7 +30,7 @@ interface MergedTimeTable {
 
 function mergeSubjectLists(
 	dateStr: DateString,
-	timetables: SubjectList[],
+	timetable: TimeTable,
 ): MergedTimeTable {
 	// const dateStr = date.toISOString().substring(0, 10);
 	const r: MergedTimeTable = {
@@ -41,19 +42,20 @@ function mergeSubjectLists(
 		updated: new Date(),
 	};
 
-	r.lastHour = timetables.reduce(
+	r.lastHour = timetable.classes.reduce(
 		(acc, tt) => tt.subjects.reduce((acc, x) => (x.nr > acc ? x.nr : acc), acc),
 		-1,
 	);
-	r.classNames = timetables.map((x) => x.className);
+	r.classNames = timetable.classes.map((x) => x.className);
 
 	for (let i = 1; i <= r.lastHour; i++) {
-		const hour: { hour: number; subjects: (Lesson | null)[] } = {
+		const hour: { hour: number; time?: Time; subjects: (Lesson | null)[] } = {
 			hour: i,
+			time: timetable.times[i],
 			subjects: [],
 		};
 		for (const className of r.classNames) {
-			const tt = timetables.find((x) => x.className === className);
+			const tt = timetable.classes.find((x) => x.className === className);
 			if (!tt) {
 				continue;
 			}
@@ -180,7 +182,15 @@ function App() {
 						{timetable?.hours.map((hour) => (
 							<tr key={hour.hour}>
 								<td className="hour" key="hour">
-									{hour.hour}
+									<b>{hour.hour}</b>
+									{hour.time && (
+										<>
+											<br />
+											<small>
+												{hour.time.from}–{hour.time.to}
+											</small>
+										</>
+									)}
 								</td>
 								{hour.subjects.map((subject, idx) => (
 									<td

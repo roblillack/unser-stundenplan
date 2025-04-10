@@ -27,6 +27,13 @@ export interface Subject {
 	tags: string[];
 }
 
+export interface Time {
+	id: number;
+	nr: number;
+	from: string;
+	to: string;
+}
+
 export interface Lesson {
 	id: number;
 	nr: number;
@@ -49,6 +56,11 @@ export interface SubjectList {
 	subjects: Lesson[];
 }
 
+export interface TimeTable {
+	times: Record<number, Time>;
+	classes: SubjectList[];
+}
+
 export function get<T>(apiToken: string, path: string): Promise<T> {
 	const url = new URL(`https://beste.schule/api/${path}`);
 
@@ -67,7 +79,7 @@ export function get<T>(apiToken: string, path: string): Promise<T> {
 export function getTimeTables(
 	apiToken: string,
 	date: Date,
-): Promise<SubjectList[]> {
+): Promise<TimeTable> {
 	const isoWeek = `${calcIsoYear(date)}-${calcIsoWeek(date)}`;
 
 	return get<WeekJournalReply>(
@@ -76,6 +88,7 @@ export function getTimeTables(
 	).then((response) => {
 		const lessonsByLevel: Record<number, Lesson[]> = {};
 		const namesByLevel: Record<number, string> = {};
+		const timesByNumber: Record<number, Time> = {};
 		for (const day of response.data.days) {
 			if (day.date !== formatDate(date)) {
 				continue;
@@ -102,18 +115,24 @@ export function getTimeTables(
 					}
 					namesByLevel[lesson.group.level_id] = common;
 				}
+				if (!timesByNumber[lesson.nr]) {
+					timesByNumber[lesson.nr] = lesson.time;
+				}
 			}
 		}
 
-		const r: SubjectList[] = [];
+		const classes: SubjectList[] = [];
 		for (const level in lessonsByLevel) {
 			lessonsByLevel[level].sort((a, b) => a.nr - b.nr);
-			r.push({
+			classes.push({
 				className: namesByLevel[level],
 				subjects: lessonsByLevel[level],
 			});
 		}
 
-		return r;
+		return {
+			times: timesByNumber,
+			classes,
+		};
 	});
 }
