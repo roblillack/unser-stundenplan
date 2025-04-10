@@ -10,6 +10,15 @@ export interface Day {
 	id: string;
 	date: string;
 	lessons: Lesson[];
+	notes: Notes[];
+}
+
+export interface Notes {
+	id: null;
+	for: "guardian";
+	source: "substitutionplan";
+	description: string;
+	notable_type: null;
 }
 
 export interface Teacher {
@@ -49,6 +58,7 @@ export interface Lesson {
 		local_id: string;
 	}[];
 	teachers: Teacher[];
+	time: Time;
 }
 
 export interface SubjectList {
@@ -59,6 +69,7 @@ export interface SubjectList {
 export interface TimeTable {
 	times: Record<number, Time>;
 	classes: SubjectList[];
+	notes: Notes[];
 }
 
 export function get<T>(apiToken: string, path: string): Promise<T> {
@@ -89,9 +100,13 @@ export function getTimeTables(
 		const lessonsByLevel: Record<number, Lesson[]> = {};
 		const namesByLevel: Record<number, string> = {};
 		const timesByNumber: Record<number, Time> = {};
+		let notes: Notes[] = [];
 		for (const day of response.data.days) {
 			if (day.date !== formatDate(date)) {
 				continue;
+			}
+			if (day.notes) {
+				notes = day.notes;
 			}
 			for (const lesson of day.lessons) {
 				lessonsByLevel[lesson.group.level_id] =
@@ -132,6 +147,7 @@ export function getTimeTables(
 
 		return {
 			times: timesByNumber,
+			notes,
 			classes,
 		};
 	});

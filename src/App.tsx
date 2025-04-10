@@ -23,6 +23,7 @@ interface MergedTimeTable {
 		time?: Time;
 		subjects: (Lesson | null)[];
 	}[];
+	notes: string[];
 	lastHour: number;
 	// Timestamp of the last update
 	updated: Date;
@@ -40,6 +41,7 @@ function mergeSubjectLists(
 		hours: [],
 		lastHour: -1,
 		updated: new Date(),
+		notes: [],
 	};
 
 	r.lastHour = timetable.classes.reduce(
@@ -62,6 +64,15 @@ function mergeSubjectLists(
 			hour.subjects.push(tt.subjects.find((x) => x.nr === i) || null);
 		}
 		r.hours.push(hour);
+	}
+
+	for (const notes of timetable.notes) {
+		for (let x of notes.description.split("\n")) {
+			x = x.replace(/^[-–—]+/, "").trim();
+			if (x.length > 0) {
+				r.notes.push(x);
+			}
+		}
 	}
 
 	return r;
@@ -225,6 +236,11 @@ function App() {
 						))}
 					</tbody>
 				</table>
+			)}
+			{timetable && timetable.notes.length > 0 && (
+				<p className="notes">
+					{timetable.notes.map((x) => x.trim()).join(" • ")}
+				</p>
 			)}
 			<p className="footer">
 				{timetable &&
