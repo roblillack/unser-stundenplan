@@ -114,8 +114,40 @@ function StateDisplay({
 	);
 }
 
+function TokenInput({ onSubmit }: { onSubmit: (token: string) => void }) {
+	const [token, setToken] = useState("");
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (token.trim()) {
+			onSubmit(token.trim());
+		}
+	};
+
+	return (
+		<div className="token-input-overlay">
+			<div className="token-input-modal">
+				<h2>API-Token eingeben</h2>
+				<p>Bitte hier den API-Token für "Beste Schule" eintragen:</p>
+				<form onSubmit={handleSubmit}>
+					<input
+						type="text"
+						value={token}
+						onChange={(e) => setToken(e.target.value)}
+						placeholder="API-Token"
+						autoFocus
+						required
+					/>
+					<button type="submit">Bestätigen</button>
+				</form>
+			</div>
+		</div>
+	);
+}
+
 function App() {
 	const [apiToken, setApiToken] = useState("");
+	const [showTokenInput, setShowTokenInput] = useState(false);
 	const [state, setState] = useState<State>("initial");
 	const [timetable, setTimetable] = useState<MergedTimeTable | undefined>();
 
@@ -126,15 +158,15 @@ function App() {
 				setApiToken(storedToken);
 				return;
 			}
-			const t = window.prompt(
-				"Bitte hier den API-Token für “Beste Schule” eintragen",
-			);
-			if (t) {
-				window.localStorage.setItem("apiToken", t);
-				setApiToken(t);
-			}
-		}
+			setShowTokenInput(true);
+	}
 	}, [apiToken]);
+
+	const handleTokenSubmit = (token: string) => {
+		window.localStorage.setItem("apiToken", token);
+		setApiToken(token);
+		setShowTokenInput(false);
+	};
 
 	const updateTimetable = useCallback(async () => {
 		if (!apiToken) {
@@ -167,6 +199,7 @@ function App() {
 
 	return (
 		<>
+			{showTokenInput && <TokenInput onSubmit={handleTokenSubmit} />}
 			<h1>
 				{timetable?.isToday === false ? "Nächster Stundenplan" : "Stundenplan"}
 			</h1>
