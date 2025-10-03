@@ -3,11 +3,11 @@
 mod api;
 mod dates;
 
-use api::{get_timetables, Lesson, Time, TimeTable};
+use api::{Lesson, Time, TimeTable, get_timetables};
 use chrono::Local;
 use dates::{format_date, next_valid_date};
 use dioxus::prelude::*;
-use dioxus_logger::tracing::{info, Level};
+use dioxus_logger::tracing::{Level, info};
 use gloo_storage::{LocalStorage, Storage};
 use gloo_timers::future::TimeoutFuture;
 use wasm_bindgen::JsCast;
@@ -27,6 +27,7 @@ struct MergedTimeTable {
     notes: Vec<String>,
     last_hour: i32,
     updated: String,
+    days_off_before: i32,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -46,6 +47,7 @@ fn merge_subject_lists(date_str: String, timetable: TimeTable) -> MergedTimeTabl
         notes: Vec::new(),
         last_hour: -1,
         updated: Local::now().format("%d.%m.%Y, %H:%M").to_string(),
+        days_off_before: timetable.days_off_before,
     };
 
     // Find the last hour
@@ -57,7 +59,11 @@ fn merge_subject_lists(date_str: String, timetable: TimeTable) -> MergedTimeTabl
         }
     }
 
-    r.class_names = timetable.classes.iter().map(|c| c.class_name.clone()).collect();
+    r.class_names = timetable
+        .classes
+        .iter()
+        .map(|c| c.class_name.clone())
+        .collect();
 
     // Build hours
     for i in 1..=r.last_hour {
@@ -68,7 +74,10 @@ fn merge_subject_lists(date_str: String, timetable: TimeTable) -> MergedTimeTabl
         };
 
         for class_name in &r.class_names {
-            let class = timetable.classes.iter().find(|c| &c.class_name == class_name);
+            let class = timetable
+                .classes
+                .iter()
+                .find(|c| &c.class_name == class_name);
             let subject = class.and_then(|c| c.subjects.iter().find(|s| s.nr == i));
             hour.subjects.push(subject.cloned());
         }
@@ -79,7 +88,9 @@ fn merge_subject_lists(date_str: String, timetable: TimeTable) -> MergedTimeTabl
     // Parse notes
     for note in timetable.notes {
         for line in note.description.split('\n') {
-            let trimmed = line.trim_start_matches(|c| c == '-' || c == '–' || c == '—').trim();
+            let trimmed = line
+                .trim_start_matches(|c| c == '-' || c == '–' || c == '—')
+                .trim();
             if !trimmed.is_empty() {
                 r.notes.push(trimmed.to_string());
             }
@@ -146,7 +157,7 @@ fn TokenInput(on_submit: EventHandler<String>) -> Element {
                         oninput: move |evt| token.set(evt.value().clone()),
                         placeholder: "API-Token",
                         autofocus: true,
-                        required: true
+                        required: true,
                     }
                     button { r#type: "submit", "Bestätigen" }
                 }
@@ -192,7 +203,8 @@ fn App() -> Element {
             match get_timetables(&token, &d).await {
                 Ok(tt) => {
                     info!("Successfully fetched timetable");
-                    let merged = merge_subject_lists(format_date(&d), tt);
+                    let actual_date_str = format_date(&tt.actual_date);
+                    let merged = merge_subject_lists(actual_date_str, tt);
                     timetable.set(Some(merged));
                     state.set(State::Loaded);
                 }
@@ -250,28 +262,45 @@ fn App() -> Element {
     let tt = timetable();
 
     rsx! {
-        {show_token_input().then(|| rsx! { TokenInput { on_submit: handle_token_submit } })}
+        {show_token_input().then(|| rsx! {
+            TokenInput { on_submit: handle_token_submit }
+        })}
 
         h1 {
-            {if let Some(ref t) = tt {
-                if t.is_today {
-                    "Stundenplan"
+            {
+                if let Some(ref t) = tt {
+                    if t.is_today { "Stundenplan" } else { "Nächster Stundenplan" }
                 } else {
-                    "Nächster Stundenplan"
+                    "Stundenplan"
                 }
-            } else {
-                "Stundenplan"
-            }}
+            }
         }
 
         h2 {
-            {tt.as_ref().map(|t| {
-                if let Ok(date) = chrono::NaiveDate::parse_from_str(&t.date, "%Y-%m-%d") {
-                    date.format("%A, %-d. %B %Y").to_string()
-                } else {
-                    t.date.clone()
-                }
-            })}
+            {
+                tt.as_ref()
+                    .map(|t| {
+                        let date_str = if let Ok(date) = chrono::NaiveDate::parse_from_str(
+                            &t.date,
+                            "%Y-%m-%d",
+                        ) {
+                            date.format("%A, %-d. %B %Y").to_string()
+                        } else {
+                            t.date.clone()
+                        };
+                        if t.days_off_before > 1 {
+                            rsx! {
+                                "{date_str}"
+                                br {}
+                                small { "bis dahin noch {t.days_off_before} Tage frei!" }
+                            }
+                        } else {
+                            rsx! {
+                            "{date_str}"
+                            }
+                        }
+                    })
+            }
         }
 
         {tt.as_ref().map(|t| rsx! {
@@ -285,71 +314,97 @@ fn App() -> Element {
                     }
                 }
                 tbody {
-                    {t.hours.iter().map(|hour| {
-                        let hour_num = hour.hour;
-                        rsx! {
-                            tr { key: "{hour_num}",
-                                td { class: "hour",
-                                    b { "{hour.hour}" }
-                                    {hour.time.as_ref().map(|time| rsx! {
-                                        br {}
-                                        small { "{time.from}–{time.to}" }
-                                    })}
-                                }
-                                {hour.subjects.iter().enumerate().map(|(idx, subject)| {
-                                    let class_name = &t.class_names[idx];
-                                    let key = format!("{}-{}", class_name, hour_num);
-                                    let cancelled = subject.as_ref().map(|s| s.status == "canceled").unwrap_or(false);
-                                    rsx! {
-                                        td {
-                                            key: "{key}",
-                                            class: if cancelled { "subject cancelled" } else { "subject" },
-                                            {subject.as_ref().map(|s| {
-                                                let name = subject_name(s);
-                                                let teachers = s.teachers.iter()
-                                                    .map(|t| format!("{} {}", t.forename, t.name))
-                                                    .collect::<Vec<_>>()
-                                                    .join("/");
-                                                let rooms = s.rooms.iter()
-                                                    .map(|r| r.local_id.clone())
-                                                    .collect::<Vec<_>>()
-                                                    .join("/");
-
-                                                rsx! {
-                                                    b {
-                                                        {if cancelled {
-                                                            rsx! { s { "{name}" } }
-                                                        } else {
-                                                            rsx! { "{name}" }
-                                                        }}
-                                                    }
-                                                    br {}
-                                                    "{teachers}"
-                                                    br {}
-                                                    {(!rooms.is_empty()).then(|| rsx! {
-                                                        small { "Raum {rooms}" }
-                                                    })}
-                                                }
+                    {
+                        t.hours
+                            .iter()
+                            .map(|hour| {
+                                let hour_num = hour.hour;
+                                rsx! {
+                                    tr { key: "{hour_num}",
+                                        td { class: "hour",
+                                            b { "{hour.hour}" }
+                                            {hour.time.as_ref().map(|time| rsx! {
+                                                br {}
+                                                small { "{time.from}–{time.to}" }
                                             })}
                                         }
+                                        {
+                                            hour.subjects
+                                                .iter()
+                                                .enumerate()
+                                                .map(|(idx, subject)| {
+                                                    let class_name = &t.class_names[idx];
+                                                    let key = format!("{}-{}", class_name, hour_num);
+                                                    let cancelled = subject
+                                                        .as_ref()
+                                                        .map(|s| s.status == "canceled")
+                                                        .unwrap_or(false);
+                                                    rsx! {
+                                                        td { key: "{key}", class: if cancelled { "subject cancelled" } else { "subject" },
+                                                            {
+                                                                subject
+                                                                    .as_ref()
+                                                                    .map(|s| {
+                                                                        let name = subject_name(s);
+                                                                        let teachers = s
+                                                                            .teachers
+                                                                            .iter()
+                                                                            .map(|t| format!("{} {}", t.forename, t.name))
+                                                                            .collect::<Vec<_>>()
+                                                                            .join("/");
+                                                                        let rooms = s
+                                                                            .rooms
+                                                                            .iter()
+                                                                            .map(|r| r.local_id.clone())
+                                                                            .collect::<Vec<_>>()
+                                                                            .join("/");
+                                                                        rsx! {
+                                                                            b {
+                                                                                {
+                                                                                    if cancelled {
+                                                                                        rsx! {
+                                                                                            s { "{name}" }
+                                                                                        }
+                                                                                    } else {
+                                                                                        rsx! {
+                                                                                        "{name}"
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                            br {}
+                                                                            "{teachers}"
+                                                                            br {}
+                                                                            {(!rooms.is_empty()).then(|| rsx! {
+                                                                                small { "Raum {rooms}" }
+                                                                            })}
+                                                                        }
+                                                                    })
+                                                            }
+                                                        }
+                                                    }
+                                                })
+                                        }
                                     }
-                                })}
-                            }
-                        }
-                    })}
+                                }
+                            })
+                    }
                 }
             }
         })}
 
-        {tt.as_ref().and_then(|t| if !t.notes.is_empty() {
-            Some(rsx! {
-                p { class: "notes",
-                    {t.notes.join(" • ")}
-                }
-            })
-        } else {
-            None
-        })}
+        {
+            tt.as_ref()
+                .and_then(|t| {
+                    if !t.notes.is_empty() {
+                        Some(rsx! {
+                            p { class: "notes", {t.notes.join(" • ")} }
+                        })
+                    } else {
+                        None
+                    }
+                })
+        }
 
         p { class: "footer",
             {tt.as_ref().map(|t| format!("Zuletzt aktualisiert: {} — ", t.updated))}

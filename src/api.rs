@@ -112,9 +112,11 @@ pub struct TimeTable {
     pub times: HashMap<i32, Time>,
     pub classes: Vec<SubjectList>,
     pub notes: Vec<Notes>,
+    pub actual_date: NaiveDate,
+    pub days_off_before: i32,
 }
 
-pub async fn get_timetables(api_token: &str, date: &NaiveDate) -> Result<TimeTable, String> {
+async fn fetch_timetable_for_date(api_token: &str, date: &NaiveDate) -> Result<(HashMap<i32, Time>, Vec<SubjectList>, Vec<Notes>), String> {
     let iso_week = calc_iso_week(date);
     let iso_year = calc_iso_year(date);
     let iso_week_str = format!("{}-{}", iso_year, iso_week);
@@ -209,9 +211,78 @@ pub async fn get_timetables(api_token: &str, date: &NaiveDate) -> Result<TimeTab
         });
     }
 
+    Ok((times_by_number, classes, notes))
+}
+
+pub async fn get_timetables(api_token: &str, date: &NaiveDate) -> Result<TimeTable, String> {
+    use chrono::Duration;
+    use chrono::Datelike;
+    use chrono::Weekday;
+
+    let (times, classes, notes) = fetch_timetable_for_date(api_token, date).await?;
+
+    // Check if this day has any lessons
+    let has_lessons = !classes.is_empty() && classes.iter().any(|c| !c.subjects.is_empty());
+
+    if has_lessons {
+        // Normal school day
+        return Ok(TimeTable {
+            times,
+            notes,
+            classes,
+            actual_date: *date,
+            days_off_before: 0,
+        });
+    }
+
+    // Holiday detected - search up to 3 weeks (21 days) for next school day
+    web_sys::console::log_1(&"No lessons found, searching for next school day...".into());
+
+    let original_date = *date;
+    let mut search_date = *date + Duration::days(1);
+    let max_search_date = *date + Duration::days(21);
+
+    while search_date <= max_search_date {
+        // Skip weekends for searching
+        if search_date.weekday() == Weekday::Sat || search_date.weekday() == Weekday::Sun {
+            search_date = search_date + Duration::days(1);
+            continue;
+        }
+
+        web_sys::console::log_1(&format!("Checking date: {}", format_date(&search_date)).into());
+
+        match fetch_timetable_for_date(api_token, &search_date).await {
+            Ok((next_times, next_classes, next_notes)) => {
+                let next_has_lessons = !next_classes.is_empty() && next_classes.iter().any(|c| !c.subjects.is_empty());
+
+                if next_has_lessons {
+                    // Calculate total days off including weekends
+                    let days_off = (search_date - original_date).num_days() as i32;
+                    web_sys::console::log_1(&format!("Found next school day: {} (days off: {})", format_date(&search_date), days_off).into());
+                    return Ok(TimeTable {
+                        times: next_times,
+                        notes: next_notes,
+                        classes: next_classes,
+                        actual_date: search_date,
+                        days_off_before: days_off,
+                    });
+                }
+            }
+            Err(e) => {
+                web_sys::console::log_1(&format!("Error fetching date {}: {}", format_date(&search_date), e).into());
+            }
+        }
+
+        search_date = search_date + Duration::days(1);
+    }
+
+    // If we couldn't find a school day within 3 weeks, return the empty timetable
+    web_sys::console::log_1(&"No school day found within 3 weeks".into());
     Ok(TimeTable {
-        times: times_by_number,
+        times,
         notes,
         classes,
+        actual_date: original_date,
+        days_off_before: 0,
     })
 }
