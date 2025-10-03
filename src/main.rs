@@ -224,7 +224,14 @@ fn App() -> Element {
             spawn(async move {
                 loop {
                     TimeoutFuture::new(REFRESH_INTERVAL_MS).await;
-                    update_timetable();
+                    // Only refresh if showing today's timetable (no days off)
+                    if let Some(tt) = timetable() {
+                        if tt.days_off_before == 0 {
+                            update_timetable();
+                        }
+                    } else {
+                        update_timetable();
+                    }
                 }
             });
         }
