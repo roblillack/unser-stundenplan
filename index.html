@@ -7,9 +7,224 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <style>
+      :root {
+        font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+        line-height: 1.5;
+        font-weight: 400;
+
+        color-scheme: light;
+        color: #213547;
+        background-color: #ffffff;
+
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      a {
+        font-weight: 500;
+        color: #646cff;
+        text-decoration: inherit;
+      }
+      a:hover {
+        color: #747bff;
+      }
+
+      body {
+        margin: 0;
+        display: flex;
+        place-items: center;
+        min-width: 320px;
+        min-height: 100vh;
+      }
+
+      h1 {
+        font-size: 3.2em;
+        line-height: 1.1;
+      }
+
+      button {
+        border-radius: 8px;
+        border: 1px solid transparent;
+        padding: 0.6em 1.2em;
+        font-size: 1em;
+        font-weight: 500;
+        font-family: inherit;
+        background-color: #f9f9f9;
+        cursor: pointer;
+        transition: border-color 0.25s;
+      }
+      button:hover {
+        border-color: #646cff;
+      }
+      button:focus,
+      button:focus-visible {
+        outline: 4px auto -webkit-focus-ring-color;
+      }
+
+      #main {
+        margin: 0 auto;
+        padding: 2rem;
+        text-align: center;
+        width: 100%;
+      }
+
+      #main h1 {
+        font-size: 1.5rem;
+        margin-bottom: 0;
+      }
+
+      #main h2 {
+        font-size: 1.25rem;
+        font-weight: normal;
+        margin-top: 0;
+        color: #888;
+      }
+
+      .timetable {
+        border: 2px solid gray;
+        border-collapse: collapse;
+        min-width: 80%;
+        margin: 0 auto;
+      }
+
+      .timetable td,
+      .timetable th {
+        border: 1px solid gray;
+        padding: 0.5em;
+      }
+
+      .timetable td b,
+      .timetable th b {
+        font-size: 1em;
+      }
+
+      .timetable td.cancelled,
+      .timetable th.cancelled {
+        color: #888888;
+        background-color: #eeeeee;
+      }
+
+      p.notes {
+        margin: 0 auto;
+        font-size: 0.8em;
+      }
+
+      .footer {
+        margin-top: 1rem;
+        font-size: 1rem;
+        color: #888;
+      }
+
+      button.linkbutton {
+        background: none;
+        border: none;
+        color: blue;
+        text-decoration: underline;
+        cursor: pointer;
+        margin: 0;
+        padding: 0;
+        display: inline;
+      }
+
+      button.linkbutton:disabled {
+        color: #888;
+        cursor: not-allowed;
+      }
+
+      @media (max-width: 700px) {
+        #main {
+          padding: 0.5rem;
+        }
+
+        .timetable th,
+        .timetable td {
+          padding: 0.1em;
+          font-size: 90%;
+        }
+      }
+
+      @media (max-width: 500px) {
+        #main {
+          padding: 0.25rem;
+        }
+
+        .timetable th,
+        .timetable td {
+          padding: 2px;
+          font-size: 85%;
+        }
+      }
+
+      .token-input-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .token-input-modal {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .token-input-modal h2 {
+        margin-top: 0;
+        color: #333;
+      }
+
+      .token-input-modal form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .token-input-modal input {
+        padding: 0.75rem;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+      }
+
+      .token-input-modal input:focus {
+        outline: none;
+        border-color: #0066cc;
+      }
+
+      .token-input-modal button {
+        padding: 0.75rem;
+        background-color: #0066cc;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+
+      .token-input-modal button:hover {
+        background-color: #0052a3;
+      }
+
+      .token-input-modal button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="main"></div>
   </body>
+  <!-- dioxus-cli will inject the app script here -->
 </html>

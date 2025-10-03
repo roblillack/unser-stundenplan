@@ -1,0 +1,8 @@
+[application]
+name = "unser-stundenplan"
+default_platform = "web"
+
+[web]
+#asset_dir = "assets"
+#out_dir = "dist"
+#index_on_404 = true
