@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "trailingSlash": false,
   "installCommand": "bash setup-build-env.sh",
-  "buildCommand": "dx bundle --release",
-  "devCommand": "dx serve",
+  "buildCommand": "/vercel/.cargo/bin/dx bundle --release",
+  "devCommand": "/vercel/.cargo/bin/dx serve",
   "outputDirectory": "target/dx/unser-stundenplan/release/web/public"
 }
