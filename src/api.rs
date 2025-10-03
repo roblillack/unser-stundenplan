@@ -116,7 +116,7 @@ pub struct TimeTable {
     pub days_off_before: i32,
 }
 
-async fn fetch_timetable_for_date(api_token: &str, date: &NaiveDate) -> Result<(HashMap<i32, Time>, Vec<SubjectList>, Vec<Notes>), String> {
+async fn fetch_week_data(api_token: &str, date: &NaiveDate) -> Result<WeekJournalReply, String> {
     let iso_week = calc_iso_week(date);
     let iso_year = calc_iso_year(date);
     let iso_week_str = format!("{}-{}", iso_year, iso_week);
@@ -155,20 +155,24 @@ async fn fetch_timetable_for_date(api_token: &str, date: &NaiveDate) -> Result<(
     let reply: WeekJournalReply = serde_json::from_str(&text)
         .map_err(|e| format!("Failed to parse JSON: {} - Body preview: {}", e, &text[..text.len().min(200)]))?;
 
+    Ok(reply)
+}
+
+fn extract_day_from_week(week_data: &WeekJournalReply, date: &NaiveDate) -> (HashMap<i32, Time>, Vec<SubjectList>, Vec<Notes>) {
     let date_str = format_date(date);
     let mut lessons_by_level: HashMap<i32, Vec<Lesson>> = HashMap::new();
     let mut names_by_level: HashMap<i32, String> = HashMap::new();
     let mut times_by_number: HashMap<i32, Time> = HashMap::new();
     let mut notes: Vec<Notes> = Vec::new();
 
-    for day in reply.data.days {
+    for day in &week_data.data.days {
         if day.date != date_str {
             continue;
         }
 
-        notes = day.notes;
+        notes = day.notes.clone();
 
-        for lesson in day.lessons {
+        for lesson in &day.lessons {
             // Skip lessons with invalid data (null level_id or nr)
             if lesson.group.level_id == 0 || lesson.nr == 0 {
                 web_sys::console::log_1(&format!("Skipping lesson with invalid data: level_id={}, nr={}", lesson.group.level_id, lesson.nr).into());
@@ -211,7 +215,7 @@ async fn fetch_timetable_for_date(api_token: &str, date: &NaiveDate) -> Result<(
         });
     }
 
-    Ok((times_by_number, classes, notes))
+    (times_by_number, classes, notes)
 }
 
 pub async fn get_timetables(api_token: &str, date: &NaiveDate) -> Result<TimeTable, String> {
@@ -219,7 +223,9 @@ pub async fn get_timetables(api_token: &str, date: &NaiveDate) -> Result<TimeTab
     use chrono::Datelike;
     use chrono::Weekday;
 
-    let (times, classes, notes) = fetch_timetable_for_date(api_token, date).await?;
+    // Fetch the initial week
+    let week_data = fetch_week_data(api_token, date).await?;
+    let (times, classes, notes) = extract_day_from_week(&week_data, date);
 
     // Check if this day has any lessons
     let has_lessons = !classes.is_empty() && classes.iter().any(|c| !c.subjects.is_empty());
@@ -242,6 +248,11 @@ pub async fn get_timetables(api_token: &str, date: &NaiveDate) -> Result<TimeTab
     let mut search_date = *date + Duration::days(1);
     let max_search_date = *date + Duration::days(21);
 
+    // Cache weeks we've already fetched, keyed by ISO week string
+    let mut week_cache: HashMap<String, WeekJournalReply> = HashMap::new();
+    let initial_week_key = format!("{}-{}", calc_iso_year(date), calc_iso_week(date));
+    week_cache.insert(initial_week_key, week_data);
+
     while search_date <= max_search_date {
         // Skip weekends for searching
         if search_date.weekday() == Weekday::Sat || search_date.weekday() == Weekday::Sun {
@@ -251,25 +262,38 @@ pub async fn get_timetables(api_token: &str, date: &NaiveDate) -> Result<TimeTab
 
         web_sys::console::log_1(&format!("Checking date: {}", format_date(&search_date)).into());
 
-        match fetch_timetable_for_date(api_token, &search_date).await {
-            Ok((next_times, next_classes, next_notes)) => {
-                let next_has_lessons = !next_classes.is_empty() && next_classes.iter().any(|c| !c.subjects.is_empty());
-
-                if next_has_lessons {
-                    // Calculate total days off including weekends
-                    let days_off = (search_date - original_date).num_days() as i32;
-                    web_sys::console::log_1(&format!("Found next school day: {} (days off: {})", format_date(&search_date), days_off).into());
-                    return Ok(TimeTable {
-                        times: next_times,
-                        notes: next_notes,
-                        classes: next_classes,
-                        actual_date: search_date,
-                        days_off_before: days_off,
-                    });
+        // Check if we need to fetch this week's data
+        let week_key = format!("{}-{}", calc_iso_year(&search_date), calc_iso_week(&search_date));
+        if !week_cache.contains_key(&week_key) {
+            web_sys::console::log_1(&format!("Fetching new week: {}", week_key).into());
+            match fetch_week_data(api_token, &search_date).await {
+                Ok(data) => {
+                    week_cache.insert(week_key.clone(), data);
+                }
+                Err(e) => {
+                    web_sys::console::log_1(&format!("Error fetching week {}: {}", week_key, e).into());
+                    search_date = search_date + Duration::days(1);
+                    continue;
                 }
             }
-            Err(e) => {
-                web_sys::console::log_1(&format!("Error fetching date {}: {}", format_date(&search_date), e).into());
+        }
+
+        // Extract the day from the cached week
+        if let Some(week_data) = week_cache.get(&week_key) {
+            let (next_times, next_classes, next_notes) = extract_day_from_week(week_data, &search_date);
+            let next_has_lessons = !next_classes.is_empty() && next_classes.iter().any(|c| !c.subjects.is_empty());
+
+            if next_has_lessons {
+                // Calculate total days off including weekends
+                let days_off = (search_date - original_date).num_days() as i32;
+                web_sys::console::log_1(&format!("Found next school day: {} (days off: {})", format_date(&search_date), days_off).into());
+                return Ok(TimeTable {
+                    times: next_times,
+                    notes: next_notes,
+                    classes: next_classes,
+                    actual_date: search_date,
+                    days_off_before: days_off,
+                });
             }
         }
 
