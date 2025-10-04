@@ -175,7 +175,9 @@ function App() {
 		const d = nextValidDate();
 		getTimeTables(apiToken, d)
 			.then((timetables) => {
-				setTimetable(mergeSubjectLists(formatDate(d), timetables));
+				// Use foundDate if available, otherwise fall back to the original date
+				const displayDate = timetables.foundDate || formatDate(d);
+				setTimetable(mergeSubjectLists(displayDate, timetables));
 				setState("loaded");
 			})
 			.catch(() => {

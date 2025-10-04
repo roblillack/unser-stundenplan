@@ -13,4 +13,4 @@ export const MAX_DAYS_OFF = 50;
 
 // Show a countdown instead of a timetable if there are at least this many
 // days off
-export const SHOW_COUNTDOWN_DAYS = 20;
+export const SHOW_COUNTDOWN_DAYS = 5;
