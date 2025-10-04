@@ -90,10 +90,7 @@ export function get<T>(apiToken: string, path: string): Promise<T> {
 	}).then((response) => response.json());
 }
 
-export function getTimeTables(
-	apiToken: string,
-	date: Date,
-): Promise<TimeTable> {
+export function getTimeTables(apiToken: string, date: Date): Promise<TimeTable> {
 	const startDate = new Date(date);
 	const maxDays = MAX_DAYS_OFF;
 
@@ -115,7 +112,10 @@ export function getTimeTables(
 	};
 
 	// Helper function to process a single day from week data
-	const processDay = (response: WeekJournalReply, checkDate: Date): { timetable: TimeTable | null; hasLessons: boolean; checkedDate: string } => {
+	const processDay = (
+		response: WeekJournalReply,
+		checkDate: Date,
+	): { timetable: TimeTable | null; hasLessons: boolean; checkedDate: string } => {
 		const lessonsByLevel: Record<number, Lesson[]> = {};
 		const namesByLevel: Record<number, string> = {};
 		const timesByNumber: Record<number, Time> = {};
@@ -134,8 +134,7 @@ export function getTimeTables(
 				hasLessons = true;
 			}
 			for (const lesson of day.lessons) {
-				lessonsByLevel[lesson.group.level_id] =
-					lessonsByLevel[lesson.group.level_id] || [];
+				lessonsByLevel[lesson.group.level_id] = lessonsByLevel[lesson.group.level_id] || [];
 				lessonsByLevel[lesson.group.level_id].push(lesson);
 
 				if (namesByLevel[lesson.group.level_id] === undefined) {
@@ -144,10 +143,7 @@ export function getTimeTables(
 					// find common prefix to determine class name
 					let common = "";
 					for (let i = 0; i < lesson.group.local_id.length; i++) {
-						if (
-							lesson.group.local_id[i] ===
-							namesByLevel[lesson.group.level_id][i]
-						) {
+						if (lesson.group.local_id[i] === namesByLevel[lesson.group.level_id][i]) {
 							common += lesson.group.local_id[i];
 						} else {
 							break;
@@ -198,7 +194,9 @@ export function getTimeTables(
 
 				if (result.hasLessons && result.timetable) {
 					// Calculate days off (including weekends)
-					const daysOff = Math.floor((searchDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+					const daysOff = Math.floor(
+						(searchDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+					);
 					return {
 						...result.timetable,
 						daysOff: daysOff > 0 ? daysOff : undefined,
@@ -215,10 +213,12 @@ export function getTimeTables(
 		// If no school day found in 3 weeks, return the original date anyway
 		const weekData = await fetchWeekData(startDate);
 		const result = processDay(weekData, startDate);
-		return result.timetable || {
-			times: {},
-			notes: [],
-			classes: [],
-		};
+		return (
+			result.timetable || {
+				times: {},
+				notes: [],
+				classes: [],
+			}
+		);
 	})();
 }

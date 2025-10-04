@@ -1,169 +1,169 @@
 #root {
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-  width: 100%;
+	margin: 0 auto;
+	padding: 2rem;
+	text-align: center;
+	width: 100%;
 }
 
 h1 {
-  font-size: 1.5rem;
-  margin-bottom: 0;
+	font-size: 1.5rem;
+	margin-bottom: 0;
 }
 
 h1.holidays {
-  font-size: 4rem;
+	font-size: 4rem;
 }
 
 h2 {
-  font-size: 1.25rem;
-  font-weight: normal;
-  margin-top: 0;
-  color: #888;
+	font-size: 1.25rem;
+	font-weight: normal;
+	margin-top: 0;
+	color: #888;
 }
 
 h2.holidays {
-  font-size: 2rem;
-  margin-bottom: 5rem;
+	font-size: 2rem;
+	margin-bottom: 5rem;
 }
 
 .timetable {
-  border: 2px solid gray;
-  border-collapse: collapse;
-  min-width: 80%;
-  margin: 0 auto;
+	border: 2px solid gray;
+	border-collapse: collapse;
+	min-width: 80%;
+	margin: 0 auto;
 
-  td,
-  th {
-    border: 1px solid gray;
-    padding: 0.5em;
+	td,
+	th {
+		border: 1px solid gray;
+		padding: 0.5em;
 
-    b {
-      font-size: 1em;
-    }
+		b {
+			font-size: 1em;
+		}
 
-    &.cancelled {
-      color: #888888;
-      background-color: #eeeeee;
-    }
-  }
+		&.cancelled {
+			color: #888888;
+			background-color: #eeeeee;
+		}
+	}
 }
 
 p.notes {
-  margin: 0 auto;
-  font-size: 0.8em;
+	margin: 0 auto;
+	font-size: 0.8em;
 }
 
 .footer {
-  margin-top: 1rem;
-  font-size: 1rem;
-  color: #888;
+	margin-top: 1rem;
+	font-size: 1rem;
+	color: #888;
 }
 
 button.linkbutton {
-  /* Make this look like a link instead of a button */
-  background: none;
-  border: none;
-  color: blue;
-  text-decoration: underline;
-  cursor: pointer;
-  margin: 0;
-  padding: 0;
-  display: inline;
+	/* Make this look like a link instead of a button */
+	background: none;
+	border: none;
+	color: blue;
+	text-decoration: underline;
+	cursor: pointer;
+	margin: 0;
+	padding: 0;
+	display: inline;
 
-  &[disabled] {
-    color: #888;
-    cursor: not-allowed;
-  }
+	&[disabled] {
+		color: #888;
+		cursor: not-allowed;
+	}
 }
 
 @media (max-width: 700px) {
-  #root {
-    padding: 0.5rem;
-  }
+	#root {
+		padding: 0.5rem;
+	}
 
-  .timetable {
-    th,
-    td {
-      padding: 0.1em;
-      font-size: 90%;
-    }
-  }
+	.timetable {
+		th,
+		td {
+			padding: 0.1em;
+			font-size: 90%;
+		}
+	}
 }
 
 @media (max-width: 500px) {
-  #root {
-    padding: 0.25rem;
-  }
+	#root {
+		padding: 0.25rem;
+	}
 
-  .timetable {
-    th,
-    td {
-      padding: 2px;
-      font-size: 85%;
-    }
-  }
+	.timetable {
+		th,
+		td {
+			padding: 2px;
+			font-size: 85%;
+		}
+	}
 }
 
 .token-input-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
 }
 
 .token-input-modal {
-  background: white;
-  border-radius: 8px;
-  padding: 2rem;
-  max-width: 400px;
-  width: 90%;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	background: white;
+	border-radius: 8px;
+	padding: 2rem;
+	max-width: 400px;
+	width: 90%;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .token-input-modal h2 {
-  margin-top: 0;
-  color: #333;
+	margin-top: 0;
+	color: #333;
 }
 
 .token-input-modal form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
 }
 
 .token-input-modal input {
-  padding: 0.75rem;
-  border: 2px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
+	padding: 0.75rem;
+	border: 2px solid #ddd;
+	border-radius: 4px;
+	font-size: 1rem;
 }
 
 .token-input-modal input:focus {
-  outline: none;
-  border-color: #0066cc;
+	outline: none;
+	border-color: #0066cc;
 }
 
 .token-input-modal button {
-  padding: 0.75rem;
-  background-color: #0066cc;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
+	padding: 0.75rem;
+	background-color: #0066cc;
+	color: white;
+	border: none;
+	border-radius: 4px;
+	font-size: 1rem;
+	cursor: pointer;
 }
 
 .token-input-modal button:hover {
-  background-color: #0052a3;
+	background-color: #0052a3;
 }
 
 .token-input-modal button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
+	background-color: #ccc;
+	cursor: not-allowed;
 }
