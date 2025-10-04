@@ -10,11 +10,20 @@ h1 {
   margin-bottom: 0;
 }
 
+h1.holidays {
+  font-size: 4rem;
+}
+
 h2 {
   font-size: 1.25rem;
   font-weight: normal;
   margin-top: 0;
   color: #888;
+}
+
+h2.holidays {
+  font-size: 2rem;
+  margin-bottom: 5rem;
 }
 
 .timetable {
