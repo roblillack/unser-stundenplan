@@ -1,3 +1,4 @@
+import { MAX_DAYS_OFF } from "./contants";
 import { calcIsoWeek, calcIsoYear, formatDate } from "./dates";
 
 export interface WeekJournalReply {
@@ -70,6 +71,8 @@ export interface TimeTable {
 	times: Record<number, Time>;
 	classes: SubjectList[];
 	notes: Notes[];
+	daysOff?: number; // Number of days off before this timetable
+	foundDate?: string; // The actual date where lessons were found (YYYY-MM-DD format)
 }
 
 export function get<T>(apiToken: string, path: string): Promise<T> {
@@ -91,22 +94,44 @@ export function getTimeTables(
 	apiToken: string,
 	date: Date,
 ): Promise<TimeTable> {
-	const isoWeek = `${calcIsoYear(date)}-${calcIsoWeek(date)}`;
+	const startDate = new Date(date);
+	const maxDays = MAX_DAYS_OFF;
 
-	return get<WeekJournalReply>(
-		apiToken,
-		`journal/weeks/${isoWeek}?include=days.lessons&interpolate=true`,
-	).then((response) => {
+	// Cache to store week data by isoWeek identifier
+	const weekCache: Record<string, WeekJournalReply> = {};
+
+	// Helper function to fetch a week (with caching)
+	const fetchWeekData = async (checkDate: Date): Promise<WeekJournalReply> => {
+		const isoWeek = `${calcIsoYear(checkDate)}-${calcIsoWeek(checkDate)}`;
+
+		if (!weekCache[isoWeek]) {
+			weekCache[isoWeek] = await get<WeekJournalReply>(
+				apiToken,
+				`journal/weeks/${isoWeek}?include=days.lessons&interpolate=true`,
+			);
+		}
+
+		return weekCache[isoWeek];
+	};
+
+	// Helper function to process a single day from week data
+	const processDay = (response: WeekJournalReply, checkDate: Date): { timetable: TimeTable | null; hasLessons: boolean; checkedDate: string } => {
 		const lessonsByLevel: Record<number, Lesson[]> = {};
 		const namesByLevel: Record<number, string> = {};
 		const timesByNumber: Record<number, Time> = {};
 		let notes: Notes[] = [];
+		const dateStr = formatDate(checkDate);
+		let hasLessons = false;
+
 		for (const day of response.data.days) {
-			if (day.date !== formatDate(date)) {
+			if (day.date !== dateStr) {
 				continue;
 			}
 			if (day.notes) {
 				notes = day.notes;
+			}
+			if (day.lessons && day.lessons.length > 0) {
+				hasLessons = true;
 			}
 			for (const lesson of day.lessons) {
 				lessonsByLevel[lesson.group.level_id] =
@@ -136,6 +161,10 @@ export function getTimeTables(
 			}
 		}
 
+		if (!hasLessons) {
+			return { timetable: null, hasLessons: false, checkedDate: dateStr };
+		}
+
 		const classes: SubjectList[] = [];
 		for (const level in lessonsByLevel) {
 			lessonsByLevel[level].sort((a, b) => a.nr - b.nr);
@@ -146,9 +175,50 @@ export function getTimeTables(
 		}
 
 		return {
-			times: timesByNumber,
-			notes,
-			classes,
+			timetable: {
+				times: timesByNumber,
+				notes,
+				classes,
+			},
+			hasLessons: true,
+			checkedDate: dateStr,
 		};
-	});
+	};
+
+	// Search for the next school day with lessons
+	return (async () => {
+		const searchDate = new Date(startDate);
+		let daysChecked = 0;
+
+		while (daysChecked < maxDays) {
+			// Skip weekends
+			if (searchDate.getDay() !== 0 && searchDate.getDay() !== 6) {
+				const weekData = await fetchWeekData(searchDate);
+				const result = processDay(weekData, searchDate);
+
+				if (result.hasLessons && result.timetable) {
+					// Calculate days off (including weekends)
+					const daysOff = Math.floor((searchDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+					return {
+						...result.timetable,
+						daysOff: daysOff > 0 ? daysOff : undefined,
+						foundDate: formatDate(searchDate),
+					};
+				}
+			}
+
+			// Move to next day
+			searchDate.setDate(searchDate.getDate() + 1);
+			daysChecked++;
+		}
+
+		// If no school day found in 3 weeks, return the original date anyway
+		const weekData = await fetchWeekData(startDate);
+		const result = processDay(weekData, startDate);
+		return result.timetable || {
+			times: {},
+			notes: [],
+			classes: [],
+		};
+	})();
 }
