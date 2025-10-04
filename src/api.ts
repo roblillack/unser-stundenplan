@@ -95,15 +95,25 @@ export function getTimeTables(
 	const startDate = new Date(date);
 	const maxDays = 21; // 3 weeks
 
-	// Helper function to fetch and process a single week
-	const fetchWeek = async (checkDate: Date): Promise<{ timetable: TimeTable | null; hasLessons: boolean; checkedDate: string }> => {
+	// Cache to store week data by isoWeek identifier
+	const weekCache: Record<string, WeekJournalReply> = {};
+
+	// Helper function to fetch a week (with caching)
+	const fetchWeekData = async (checkDate: Date): Promise<WeekJournalReply> => {
 		const isoWeek = `${calcIsoYear(checkDate)}-${calcIsoWeek(checkDate)}`;
 
-		const response = await get<WeekJournalReply>(
-			apiToken,
-			`journal/weeks/${isoWeek}?include=days.lessons&interpolate=true`,
-		);
+		if (!weekCache[isoWeek]) {
+			weekCache[isoWeek] = await get<WeekJournalReply>(
+				apiToken,
+				`journal/weeks/${isoWeek}?include=days.lessons&interpolate=true`,
+			);
+		}
 
+		return weekCache[isoWeek];
+	};
+
+	// Helper function to process a single day from week data
+	const processDay = (response: WeekJournalReply, checkDate: Date): { timetable: TimeTable | null; hasLessons: boolean; checkedDate: string } => {
 		const lessonsByLevel: Record<number, Lesson[]> = {};
 		const namesByLevel: Record<number, string> = {};
 		const timesByNumber: Record<number, Time> = {};
@@ -181,7 +191,8 @@ export function getTimeTables(
 		while (daysChecked < maxDays) {
 			// Skip weekends
 			if (searchDate.getDay() !== 0 && searchDate.getDay() !== 6) {
-				const result = await fetchWeek(searchDate);
+				const weekData = await fetchWeekData(searchDate);
+				const result = processDay(weekData, searchDate);
 
 				if (result.hasLessons && result.timetable) {
 					// Calculate days off (including weekends)
@@ -199,7 +210,8 @@ export function getTimeTables(
 		}
 
 		// If no school day found in 3 weeks, return the original date anyway
-		const result = await fetchWeek(startDate);
+		const weekData = await fetchWeekData(startDate);
+		const result = processDay(weekData, startDate);
 		return result.timetable || {
 			times: {},
 			notes: [],
