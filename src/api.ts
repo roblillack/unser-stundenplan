@@ -1,3 +1,4 @@
+import { MAX_DAYS_OFF } from "./contants";
 import { calcIsoWeek, calcIsoYear, formatDate } from "./dates";
 
 export interface WeekJournalReply {
@@ -93,7 +94,7 @@ export function getTimeTables(
 	date: Date,
 ): Promise<TimeTable> {
 	const startDate = new Date(date);
-	const maxDays = 21; // 3 weeks
+	const maxDays = MAX_DAYS_OFF;
 
 	// Cache to store week data by isoWeek identifier
 	const weekCache: Record<string, WeekJournalReply> = {};
