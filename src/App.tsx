@@ -27,6 +27,8 @@ interface MergedTimeTable {
 	lastHour: number;
 	// Timestamp of the last update
 	updated: Date;
+	// Number of days off before this timetable
+	daysOff?: number;
 }
 
 function mergeSubjectLists(
@@ -42,6 +44,7 @@ function mergeSubjectLists(
 		lastHour: -1,
 		updated: new Date(),
 		notes: [],
+		daysOff: timetable.daysOff,
 	};
 
 	r.lastHour = timetable.classes.reduce(
@@ -187,9 +190,19 @@ function App() {
 	}, [apiToken]);
 
 	useEffect(() => {
-		const h = setInterval(updateTimetable, REFRESH_INTERVAL_MS);
+		// Only set up periodic updates if there are no days off
+		// (if there are days off, we just wait for the page reload)
+		const shouldUpdate = !timetable || !timetable.daysOff || timetable.daysOff === 0;
+
+		if (shouldUpdate) {
+			const h = setInterval(updateTimetable, REFRESH_INTERVAL_MS);
+			return () => clearInterval(h);
+		}
+	}, [updateTimetable, timetable]);
+
+	useEffect(() => {
+		// Initial load
 		updateTimetable();
-		return () => clearInterval(h);
 	}, [updateTimetable]);
 
 	useEffect(() => {
@@ -211,6 +224,12 @@ function App() {
 						month: "long",
 						day: "numeric",
 					})}
+				{timetable && timetable.daysOff && timetable.daysOff > 0 && (
+					<>
+						<br />
+						bis dahin noch {timetable.daysOff} {timetable.daysOff === 1 ? "Tag" : "Tage"} frei!
+					</>
+				)}
 			</h2>
 			{timetable && (
 				<table className="timetable">
