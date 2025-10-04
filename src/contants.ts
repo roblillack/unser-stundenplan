@@ -1,4 +1,3 @@
-
 // Update the timetable every 7 minutes
 export const REFRESH_INTERVAL_MS = 1000 * 60 * 7;
 // export const REFRESH_INTERVAL_MS = 1000 * 10;

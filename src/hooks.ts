@@ -1,9 +1,6 @@
 import { useEffect } from "react";
 
-export function useVisibilityChange(
-	callback: (isVisible: boolean) => void,
-	deps: unknown[],
-) {
+export function useVisibilityChange(callback: (isVisible: boolean) => void, deps: unknown[]) {
 	useEffect(() => {
 		const handler = () => {
 			callback(document.visibilityState === "visible");

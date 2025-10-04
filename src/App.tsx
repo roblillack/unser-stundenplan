@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import "./App.css";
-import { getTimeTables, type Time, type TimeTable, type Lesson } from "./api";
-import { type DateString, formatDate, nextValidDate } from "./dates";
+import { type Lesson, type Time, type TimeTable, getTimeTables } from "./api";
 import { REFRESH_INTERVAL_MS, RELOAD_INTERVAL_MS, SHOW_COUNTDOWN_DAYS } from "./contants";
-
+import { type DateString, formatDate, nextValidDate } from "./dates";
 
 interface MergedTimeTable {
 	// Formatted date, the timetable is for. Format: "YYYY-MM-DD"
@@ -25,10 +24,7 @@ interface MergedTimeTable {
 	daysOff?: number;
 }
 
-function mergeSubjectLists(
-	dateStr: DateString,
-	timetable: TimeTable,
-): MergedTimeTable {
+function mergeSubjectLists(dateStr: DateString, timetable: TimeTable): MergedTimeTable {
 	// const dateStr = date.toISOString().substring(0, 10);
 	const r: MergedTimeTable = {
 		date: dateStr,
@@ -156,7 +152,7 @@ function App() {
 				return;
 			}
 			setShowTokenInput(true);
-	}
+		}
 	}, [apiToken]);
 
 	const handleTokenSubmit = (token: string) => {
@@ -211,22 +207,19 @@ function App() {
 	return (
 		<>
 			{showTokenInput && <TokenInput onSubmit={handleTokenSubmit} />}
-			{(noSchoolFound || timetable?.daysOff !== undefined && timetable?.daysOff >= SHOW_COUNTDOWN_DAYS) ? (
+			{noSchoolFound ||
+			(timetable?.daysOff !== undefined && timetable?.daysOff >= SHOW_COUNTDOWN_DAYS) ? (
 				<>
-					<h1 className="holidays">
-						FERIEN
-					</h1>
+					<h1 className="holidays">FERIEN</h1>
 					{timetable && timetable.daysOff !== undefined && timetable.daysOff >= 1 && (
-						<>
-							<h2 className="holidays">Bis zum nächsten Schultag noch {timetable.daysOff} Tage frei!</h2>
-						</>
-					)}		
+						<h2 className="holidays">
+							Bis zum nächsten Schultag noch {timetable.daysOff} Tage frei!
+						</h2>
+					)}
 				</>
 			) : (
 				<>
-					<h1>
-						{timetable?.isToday === false ? "Nächster Stundenplan" : "Stundenplan"}
-					</h1>
+					<h1>{timetable?.isToday === false ? "Nächster Stundenplan" : "Stundenplan"}</h1>
 					<h2>
 						{timetable &&
 							new Date(timetable.date).toLocaleDateString(undefined, {
@@ -275,15 +268,10 @@ function App() {
 															)}
 														</b>
 														<br />
-														{subject.teachers
-															.map((x) => `${x.forename} ${x.name}`)
-															.join("/")}{" "}
+														{subject.teachers.map((x) => `${x.forename} ${x.name}`).join("/")}{" "}
 														<br />
 														{subject.rooms.length > 0 && (
-															<small>
-																Raum{" "}
-																{subject.rooms.map((x) => x.local_id).join("/")}
-															</small>
+															<small>Raum {subject.rooms.map((x) => x.local_id).join("/")}</small>
 														)}
 													</>
 												)}
@@ -295,9 +283,7 @@ function App() {
 						</table>
 					)}
 					{timetable && timetable.notes.length > 0 && (
-						<p className="notes">
-							{timetable.notes.map((x) => x.trim()).join(" • ")}
-						</p>
+						<p className="notes">{timetable.notes.map((x) => x.trim()).join(" • ")}</p>
 					)}
 				</>
 			)}
