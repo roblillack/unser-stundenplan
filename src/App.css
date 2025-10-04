@@ -1,13 +1,13 @@
 #root {
-	margin: 0 auto;
-	padding: 2rem;
-	text-align: center;
 	width: 100%;
+	padding: 2rem;
+	margin: 0 auto;
+	text-align: center;
 }
 
 h1 {
-	font-size: 1.5rem;
 	margin-bottom: 0;
+	font-size: 1.5rem;
 }
 
 h1.holidays {
@@ -15,27 +15,27 @@ h1.holidays {
 }
 
 h2 {
+	margin-top: 0;
 	font-size: 1.25rem;
 	font-weight: normal;
-	margin-top: 0;
 	color: #888;
 }
 
 h2.holidays {
-	font-size: 2rem;
 	margin-bottom: 5rem;
+	font-size: 2rem;
 }
 
 .timetable {
-	border: 2px solid gray;
-	border-collapse: collapse;
 	min-width: 80%;
 	margin: 0 auto;
+	border-collapse: collapse;
+	border: 2px solid gray;
 
 	td,
 	th {
-		border: 1px solid gray;
 		padding: 0.5em;
+		border: 1px solid gray;
 
 		b {
 			font-size: 1em;
@@ -61,14 +61,15 @@ p.notes {
 
 button.linkbutton {
 	/* Make this look like a link instead of a button */
-	background: none;
-	border: none;
+	display: inline;
+	padding: 0;
+	margin: 0;
 	color: blue;
 	text-decoration: underline;
 	cursor: pointer;
-	margin: 0;
-	padding: 0;
-	display: inline;
+	/* Make this look like a link instead of a button */
+	background: none;
+	border: none;
 
 	&[disabled] {
 		color: #888;
@@ -107,22 +108,22 @@ button.linkbutton {
 .token-input-overlay {
 	position: fixed;
 	top: 0;
-	left: 0;
 	right: 0;
 	bottom: 0;
-	background-color: rgba(0, 0, 0, 0.5);
+	left: 0;
+	z-index: 1000;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	z-index: 1000;
+	background-color: rgba(0, 0, 0, 0.5);
 }
 
 .token-input-modal {
+	width: 90%;
+	max-width: 400px;
+	padding: 2rem;
 	background: white;
 	border-radius: 8px;
-	padding: 2rem;
-	max-width: 400px;
-	width: 90%;
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -139,9 +140,9 @@ button.linkbutton {
 
 .token-input-modal input {
 	padding: 0.75rem;
+	font-size: 1rem;
 	border: 2px solid #ddd;
 	border-radius: 4px;
-	font-size: 1rem;
 }
 
 .token-input-modal input:focus {
@@ -151,12 +152,12 @@ button.linkbutton {
 
 .token-input-modal button {
 	padding: 0.75rem;
-	background-color: #0066cc;
+	font-size: 1rem;
 	color: white;
+	cursor: pointer;
+	background-color: #0066cc;
 	border: none;
 	border-radius: 4px;
-	font-size: 1rem;
-	cursor: pointer;
 }
 
 .token-input-modal button:hover {
@@ -164,6 +165,6 @@ button.linkbutton {
 }
 
 .token-input-modal button:disabled {
-	background-color: #ccc;
 	cursor: not-allowed;
+	background-color: #ccc;
 }
