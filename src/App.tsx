@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import "./App.css";
-import { type Lesson, type Time, type TimeTable, getTimeTables } from "./api";
+
+import { getTimeTables, type Lesson, type Time, type TimeTable } from "./api";
 import { REFRESH_INTERVAL_MS, RELOAD_INTERVAL_MS, SHOW_COUNTDOWN_DAYS } from "./contants";
 import { type DateString, formatDate, nextValidDate } from "./dates";
+
+import "./App.css";
 
 interface MergedTimeTable {
 	// Formatted date, the timetable is for. Format: "YYYY-MM-DD"
@@ -81,13 +83,7 @@ function subjectName(subject: Lesson): string {
 
 type State = "initial" | "loading" | "loaded" | "error";
 
-function StateDisplay({
-	state,
-	onClick,
-}: {
-	state: State;
-	onClick: () => void;
-}) {
+function StateDisplay({ state, onClick }: { state: State; onClick: () => void }) {
 	if (state === "initial" || state === "loading") {
 		return "Lade …";
 	}
@@ -97,9 +93,9 @@ function StateDisplay({
 			{state === "error" ? "Fehler! " : ""}
 			<button
 				className="linkbutton"
-				type="button"
-				onClick={onClick}
 				disabled={!(state === "loaded" || state === "error")}
+				onClick={onClick}
+				type="button"
 			>
 				Aktualisieren
 			</button>
@@ -124,12 +120,12 @@ function TokenInput({ onSubmit }: { onSubmit: (token: string) => void }) {
 				<p>Bitte hier den API-Token für "Beste Schule" eintragen:</p>
 				<form onSubmit={handleSubmit}>
 					<input
-						type="text"
-						value={token}
+						autoFocus
 						onChange={(e) => setToken(e.target.value)}
 						placeholder="API-Token"
-						autoFocus
 						required
+						type="text"
+						value={token}
 					/>
 					<button type="submit">Bestätigen</button>
 				</form>
@@ -296,7 +292,7 @@ function App() {
 						hour: "2-digit",
 						minute: "2-digit",
 					})} — `}
-				<StateDisplay state={state} onClick={updateTimetable} />
+				<StateDisplay onClick={updateTimetable} state={state} />
 			</p>
 		</>
 	);
