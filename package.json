@@ -18,7 +18,10 @@
 		"build": "tsc -b && vite build",
 		"lint": "biome check .",
 		"format": "biome format --write .",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"cap:sync": "cap sync",
+		"cap:open:ios": "cap open ios",
+		"cap:build": "yarn build && cap sync"
 	},
 	"dependencies": {
 		"react": "^19.2.0",
@@ -32,6 +35,11 @@
 		"@vitejs/plugin-react": "^5.0.4",
 		"terser": "^5.44.0",
 		"typescript": "^5.9.3",
-		"vite": "^7.1.9"
+		"vite": "^7.1.9",
+		"@capacitor/app": "^7.1.0",
+		"@capacitor/cli": "^7.4.3",
+		"@capacitor/core": "^7.4.3",
+		"@capacitor/ios": "^7.4.3",
+		"@capacitor/splash-screen": "^7.0.3"
 	}
 }
