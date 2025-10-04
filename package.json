@@ -11,9 +11,11 @@
 		"preview": "vite preview",
 		"cap:sync": "cap sync",
 		"cap:open:ios": "cap open ios",
+		"cap:open:android": "cap open android",
 		"cap:build": "yarn build && cap sync"
 	},
 	"dependencies": {
+		"@capacitor/android": "^7.4.3",
 		"@capacitor/app": "^7.1.0",
 		"@capacitor/cli": "^7.4.3",
 		"@capacitor/core": "^7.4.3",
