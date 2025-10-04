@@ -112,15 +112,6 @@ Then clean build folder in Xcode: Product → Clean Build Folder
 ### Web assets not updating
 Make sure to run `yarn build` before `yarn cap:sync`
 
-## Adding Android Later
-
-To add Android support in the future:
-```bash
-npx cap add android
-yarn cap:sync
-npx cap open android
-```
-
 ## Resources
 
 - [Capacitor Documentation](https://capacitorjs.com)
