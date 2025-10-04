@@ -72,6 +72,7 @@ export interface TimeTable {
 	classes: SubjectList[];
 	notes: Notes[];
 	daysOff?: number; // Number of days off before this timetable
+	foundDate?: string; // The actual date where lessons were found (YYYY-MM-DD format)
 }
 
 export function get<T>(apiToken: string, path: string): Promise<T> {
@@ -201,6 +202,7 @@ export function getTimeTables(
 					return {
 						...result.timetable,
 						daysOff: daysOff > 0 ? daysOff : undefined,
+						foundDate: formatDate(searchDate),
 					};
 				}
 			}
