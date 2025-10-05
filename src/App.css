@@ -7,14 +7,14 @@
 
 /* Holiday mode: rainbow background with white text */
 #root.holiday-mode {
-	min-height: 100vh;
-	padding: 0;
 	display: flex;
 	flex-direction: column;
+	min-height: 100vh;
+	padding: 0;
+	color: #fff;
 	/* Nice multi-color gradient background */
 	background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb, #5f27cd, #10ac84);
 	background-size: cover;
-	color: #fff;
 }
 
 #root.holiday-mode h1,
@@ -31,8 +31,8 @@
 
 /* Center the main content vertically in holiday mode */
 #root.holiday-mode .main {
-	flex: 1;
 	display: flex;
+	flex: 1;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;

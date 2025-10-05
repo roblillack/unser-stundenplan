@@ -208,6 +208,11 @@ function App() {
 		const root = document.getElementById("root");
 		if (!root) return;
 
+		document
+			.getElementsByTagName("meta")
+			.namedItem("theme-color")
+			?.setAttribute("content", isHolidayMode ? "#000000" : "#ffffff");
+
 		if (isHolidayMode) {
 			root.classList.add("holiday-mode");
 		} else {
