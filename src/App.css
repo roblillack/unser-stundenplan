@@ -5,6 +5,47 @@
 	text-align: center;
 }
 
+/* Holiday mode: rainbow background with white text */
+#root.holiday-mode {
+	min-height: 100vh;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	/* Nice multi-color gradient background */
+	background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb, #5f27cd, #10ac84);
+	background-size: cover;
+	color: #fff;
+}
+
+#root.holiday-mode h1,
+#root.holiday-mode h2,
+#root.holiday-mode p,
+#root.holiday-mode button {
+	color: #fff;
+}
+
+#root.holiday-mode h1.holidays,
+#root.holiday-mode h2.holidays {
+	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* Center the main content vertically in holiday mode */
+#root.holiday-mode .main {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+#root.holiday-mode .footer {
+	color: rgba(255, 255, 255, 0.9);
+}
+
+#root.holiday-mode button.linkbutton {
+	color: #fff;
+}
+
 h1 {
 	margin-bottom: 0;
 	font-size: 1.5rem;

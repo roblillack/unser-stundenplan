@@ -199,90 +199,106 @@ function App() {
 	}, []);
 
 	const noSchoolFound = timetable && timetable.classNames.length === 0;
+	const isHolidayMode =
+		noSchoolFound ||
+		(timetable?.daysOff !== undefined && timetable?.daysOff >= SHOW_COUNTDOWN_DAYS);
+
+	// Toggle holiday background class on the root element
+	useEffect(() => {
+		const root = document.getElementById("root");
+		if (!root) return;
+
+		if (isHolidayMode) {
+			root.classList.add("holiday-mode");
+		} else {
+			root.classList.remove("holiday-mode");
+		}
+	}, [isHolidayMode]);
 
 	return (
 		<>
 			{showTokenInput && <TokenInput onSubmit={handleTokenSubmit} />}
-			{noSchoolFound ||
-			(timetable?.daysOff !== undefined && timetable?.daysOff >= SHOW_COUNTDOWN_DAYS) ? (
-				<>
-					<h1 className="holidays">FERIEN</h1>
-					{timetable && timetable.daysOff !== undefined && timetable.daysOff >= 1 && (
-						<h2 className="holidays">
-							Bis zum nächsten Schultag noch {timetable.daysOff} Tage frei!
+			<div className="main">
+				{isHolidayMode ? (
+					<>
+						<h1 className="holidays">FERIEN</h1>
+						{timetable && timetable.daysOff !== undefined && timetable.daysOff >= 1 && (
+							<h2 className="holidays">
+								Bis zum nächsten Schultag noch {timetable.daysOff} Tage frei!
+							</h2>
+						)}
+					</>
+				) : (
+					<>
+						<h1>{timetable?.isToday === false ? "Nächster Stundenplan" : "Stundenplan"}</h1>
+						<h2>
+							{timetable &&
+								new Date(timetable.date).toLocaleDateString(undefined, {
+									weekday: "long",
+									year: "numeric",
+									month: "long",
+									day: "numeric",
+								})}
 						</h2>
-					)}
-				</>
-			) : (
-				<>
-					<h1>{timetable?.isToday === false ? "Nächster Stundenplan" : "Stundenplan"}</h1>
-					<h2>
-						{timetable &&
-							new Date(timetable.date).toLocaleDateString(undefined, {
-								weekday: "long",
-								year: "numeric",
-								month: "long",
-								day: "numeric",
-							})}
-					</h2>
-					{timetable && (
-						<table className="timetable">
-							<thead>
-								<tr>
-									<th>Stunde</th>
-									{timetable?.classNames.map((x) => (
-										<th key={x}>{x}</th>
-									))}
-								</tr>
-							</thead>
-							<tbody>
-								{timetable?.hours.map((hour) => (
-									<tr key={hour.hour}>
-										<td className="hour" key="hour">
-											<b>{hour.hour}</b>
-											{hour.time && (
-												<>
-													<br />
-													<small>
-														{hour.time.from}–{hour.time.to}
-													</small>
-												</>
-											)}
-										</td>
-										{hour.subjects.map((subject, idx) => (
-											<td
-												className={`subject ${subject?.status === "canceled" ? "cancelled" : ""}`}
-												key={`${timetable?.classNames[idx]}-${hour.hour}`}
-											>
-												{subject && (
+						{timetable && (
+							<table className="timetable">
+								<thead>
+									<tr>
+										<th>Stunde</th>
+										{timetable?.classNames.map((x) => (
+											<th key={x}>{x}</th>
+										))}
+									</tr>
+								</thead>
+								<tbody>
+									{timetable?.hours.map((hour) => (
+										<tr key={hour.hour}>
+											<td className="hour" key="hour">
+												<b>{hour.hour}</b>
+												{hour.time && (
 													<>
-														<b>
-															{subject.status === "canceled" ? (
-																<s>{subjectName(subject)}</s>
-															) : (
-																subjectName(subject)
-															)}
-														</b>
 														<br />
-														{subject.teachers.map((x) => `${x.forename} ${x.name}`).join("/")}{" "}
-														<br />
-														{subject.rooms.length > 0 && (
-															<small>Raum {subject.rooms.map((x) => x.local_id).join("/")}</small>
-														)}
+														<small>
+															{hour.time.from}–{hour.time.to}
+														</small>
 													</>
 												)}
 											</td>
-										))}
-									</tr>
-								))}
-							</tbody>
-						</table>
-					)}
-					{timetable && timetable.notes.length > 0 && (
-						<p className="notes">{timetable.notes.map((x) => x.trim()).join(" • ")}</p>
-					)}
-				</>
-			)}
+											{hour.subjects.map((subject, idx) => (
+												<td
+													className={`subject ${subject?.status === "canceled" ? "cancelled" : ""}`}
+													key={`${timetable?.classNames[idx]}-${hour.hour}`}
+												>
+													{subject && (
+														<>
+															<b>
+																{subject.status === "canceled" ? (
+																	<s>{subjectName(subject)}</s>
+																) : (
+																	subjectName(subject)
+																)}
+															</b>
+															<br />
+															{subject.teachers.map((x) => `${x.forename} ${x.name}`).join("/")}{" "}
+															<br />
+															{subject.rooms.length > 0 && (
+																<small>Raum {subject.rooms.map((x) => x.local_id).join("/")}</small>
+															)}
+														</>
+													)}
+												</td>
+											))}
+										</tr>
+									))}
+								</tbody>
+							</table>
+						)}
+						{timetable && timetable.notes.length > 0 && (
+							<p className="notes">{timetable.notes.map((x) => x.trim()).join(" • ")}</p>
+						)}
+					</>
+				)}
+			</div>
 			<p className="footer">
 				{timetable &&
 					`Zuletzt aktualisiert: ${timetable.updated.toLocaleString([], {
