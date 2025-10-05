@@ -13,10 +13,6 @@ export function nextValidDate(): Date {
 		d.setDate(d.getDate() + 1);
 	}
 
-	while (d.getDay() === 0 || d.getDay() === 6) {
-		d.setDate(d.getDate() + 1);
-	}
-
 	return d;
 }
 
