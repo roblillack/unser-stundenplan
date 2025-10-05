@@ -226,10 +226,10 @@ function App() {
 			<div className="main">
 				{isHolidayMode ? (
 					<>
-						<h1 className="holidays">FERIEN</h1>
+						<h1 className="holidays">FERIEN!</h1>
 						{timetable && timetable.daysOff !== undefined && timetable.daysOff >= 1 && (
 							<h2 className="holidays">
-								Bis zum nächsten Schultag noch {timetable.daysOff} Tage frei!
+								Bis zum nächsten Schultag noch <span>{timetable.daysOff} Tage</span> frei.
 							</h2>
 						)}
 					</>

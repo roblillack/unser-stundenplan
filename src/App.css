@@ -52,7 +52,8 @@ h1 {
 }
 
 h1.holidays {
-	font-size: 4rem;
+	font-size: 10rem;
+	letter-spacing: 0.25rem;
 }
 
 h2 {
@@ -63,8 +64,20 @@ h2 {
 }
 
 h2.holidays {
-	margin-bottom: 5rem;
 	font-size: 2rem;
+	font-weight: bold;
+	font-style: italic;
+	margin-bottom: 5rem;
+	padding: 0 5em;
+}
+
+h2.holidays span {
+	background: rgba(255, 255, 0, 0.9);
+	color: black;
+	padding: 0 0.2em;
+	border-radius: 0.15em;
+	font-style: italic;
+	text-shadow: none;
 }
 
 .timetable {
