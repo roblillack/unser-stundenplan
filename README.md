@@ -27,6 +27,7 @@ You may notice that the codebase, commit messages, and pull requests are often i
 ### Recommended Setup
 
 For the best experience:
+
 - Use an old iPad mounted in your kitchen
 - Open the app in Safari and add it to the home screen (for fullscreen mode)
 - Enable "Guided Access" to prevent accidental exits
@@ -34,13 +35,13 @@ For the best experience:
 
 ## Features
 
-- 📅 Automatically finds the next school day (skips weekends and holidays)
-- 🔄 Auto-refresh every 5 minutes to catch schedule changes
-- 🎉 Holiday detection with countdown to next school day
-- 👨‍👩‍👧‍👦 Multi-child support (displays multiple class schedules side-by-side)
-- 📝 Shows daily notes and announcements
-- ❌ Highlights cancelled lessons
-- 📱 iOS Safari optimized (fullscreen web app mode)
+- Automatically finds the next school day (skips weekends and holidays)
+- Auto-refresh every 5 minutes to catch schedule changes
+- Holiday detection with countdown to next school day
+- Multi-child support (displays multiple class schedules side-by-side)
+- Shows daily notes and announcements
+- Highlights cancelled lessons
+- iOS Safari optimized (fullscreen web app mode)
 
 ## Tech Stack
 
@@ -105,4 +106,4 @@ No Vercel configuration file needed! The platform auto-detects the build process
 
 ## License
 
-This is a personal project. Use at your own risk.
+This is a personal project. Use at your own risk. The source code is available under the MIT License. See [LICENSE](LICENSE) for details.

@@ -1,7 +1,17 @@
 {
 	"name": "stundenplan",
-	"private": true,
-	"version": "0.0.0",
+	"version": "0.1.0",
+	"license": "MIT",
+	"author": {
+		"name": "Robert Lillack",
+		"url": "https://roblillack.net"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/roblillack/unser-stundenplan.git"
+	},
+	"homepage": "https://github.com/roblillack/unser-stundenplan",
+	"description": "A simple web app to view school schedules for 'Beste Schule' platform.",
 	"type": "module",
 	"scripts": {
 		"dev": "vite --host",
