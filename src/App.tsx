@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { getTimeTables, type Lesson, type Time, type TimeTable } from "./api";
+import { ApiError, getTimeTables, type Lesson, type Time, type TimeTable } from "./api";
 import { REFRESH_INTERVAL_MS, RELOAD_INTERVAL_MS, SHOW_COUNTDOWN_DAYS } from "./contants";
 import { type DateString, formatDate, nextValidDate } from "./dates";
 
@@ -83,23 +83,46 @@ function subjectName(subject: Lesson): string {
 
 type State = "initial" | "loading" | "loaded" | "error";
 
-function StateDisplay({ state, onClick }: { state: State; onClick: () => void }) {
+function StateDisplay({
+	state,
+	errorCode,
+	onClick,
+	onLogout,
+}: {
+	state: State;
+	errorCode?: number;
+	onClick: () => void;
+	onLogout: () => void;
+}) {
 	if (state === "initial" || state === "loading") {
 		return "Lade …";
 	}
 
+	if (state === "error") {
+		return (
+			<>
+				{`Fehler${errorCode ? `: ${errorCode}` : ""}!`}
+				<br />
+				<button className="linkbutton" onClick={onClick} type="button">
+					Aktualisieren
+				</button>
+				{", "}
+				<button className="linkbutton" onClick={onLogout} type="button">
+					Logout
+				</button>
+			</>
+		);
+	}
+
 	return (
-		<>
-			{state === "error" ? "Fehler! " : ""}
-			<button
-				className="linkbutton"
-				disabled={!(state === "loaded" || state === "error")}
-				onClick={onClick}
-				type="button"
-			>
-				Aktualisieren
-			</button>
-		</>
+		<button
+			className="linkbutton"
+			disabled={state !== "loaded"}
+			onClick={onClick}
+			type="button"
+		>
+			Aktualisieren
+		</button>
 	);
 }
 
@@ -138,6 +161,7 @@ function App() {
 	const [apiToken, setApiToken] = useState("");
 	const [showTokenInput, setShowTokenInput] = useState(false);
 	const [state, setState] = useState<State>("initial");
+	const [errorCode, setErrorCode] = useState<number | undefined>();
 	const [timetable, setTimetable] = useState<MergedTimeTable | undefined>();
 
 	useEffect(() => {
@@ -157,12 +181,22 @@ function App() {
 		setShowTokenInput(false);
 	};
 
+	const handleLogout = () => {
+		window.localStorage.removeItem("apiToken");
+		setApiToken("");
+		setState("initial");
+		setErrorCode(undefined);
+		setTimetable(undefined);
+		setShowTokenInput(true);
+	};
+
 	const updateTimetable = useCallback(async () => {
 		if (!apiToken) {
 			return;
 		}
 
 		setState("loading");
+		setErrorCode(undefined);
 
 		const d = nextValidDate();
 		getTimeTables(apiToken, d)
@@ -172,8 +206,11 @@ function App() {
 				setTimetable(mergeSubjectLists(displayDate, timetables));
 				setState("loaded");
 			})
-			.catch(() => {
+			.catch((error) => {
 				setState("error");
+				if (error instanceof ApiError) {
+					setErrorCode(error.statusCode);
+				}
 			});
 	}, [apiToken]);
 
@@ -313,7 +350,7 @@ function App() {
 						hour: "2-digit",
 						minute: "2-digit",
 					})} — `}
-				<StateDisplay onClick={updateTimetable} state={state} />
+				<StateDisplay errorCode={errorCode} onClick={updateTimetable} onLogout={handleLogout} state={state} />
 			</p>
 		</>
 	);

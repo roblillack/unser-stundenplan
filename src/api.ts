@@ -75,6 +75,16 @@ export interface TimeTable {
 	foundDate?: string; // The actual date where lessons were found (YYYY-MM-DD format)
 }
 
+export class ApiError extends Error {
+	constructor(
+		message: string,
+		public statusCode: number,
+	) {
+		super(message);
+		this.name = "ApiError";
+	}
+}
+
 export function get<T>(apiToken: string, path: string): Promise<T> {
 	const url = new URL(`https://beste.schule/api/${path}`);
 
@@ -87,7 +97,12 @@ export function get<T>(apiToken: string, path: string): Promise<T> {
 	return fetch(url, {
 		method: "GET",
 		headers,
-	}).then((response) => response.json());
+	}).then((response) => {
+		if (!response.ok) {
+			throw new ApiError(`HTTP error ${response.status}`, response.status);
+		}
+		return response.json();
+	});
 }
 
 export function getTimeTables(apiToken: string, date: Date): Promise<TimeTable> {
