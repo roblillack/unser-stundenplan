@@ -62,6 +62,7 @@ function mergeSubjectLists(dateStr: DateString, timetable: TimeTable): MergedTim
 	}
 
 	for (const notes of timetable.notes) {
+		if (!notes.description) continue;
 		for (let x of notes.description.split("\n")) {
 			x = x.replace(/^[-–—]+/, "").trim();
 			if (x.length > 0) {
@@ -207,6 +208,7 @@ function App() {
 				setState("loaded");
 			})
 			.catch((error) => {
+				console.error("Failed to update timetable:", error);
 				setState("error");
 				if (error instanceof ApiError) {
 					setErrorCode(error.statusCode);
