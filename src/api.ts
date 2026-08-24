@@ -91,6 +91,9 @@ export interface Lesson {
 }
 
 export interface SubjectList {
+	// The name we call the kid by, e.g. "Max"
+	studentName: string;
+	// The class the kid is in, e.g. "5a" or "11/3"
 	className: string;
 	subjects: Lesson[];
 }
@@ -148,7 +151,12 @@ function className(student: Student, levelName?: string): string {
 		}
 	}
 
-	return levelName || student.nickname || student.forename;
+	return levelName || "";
+}
+
+// The name we call the kid by: just the first of possibly several given names.
+function studentName(student: Student): string {
+	return (student.nickname || student.forename || student.name).trim().split(/\s+/)[0];
 }
 
 export function getTimeTables(apiToken: string, date: Date): Promise<TimeTable> {
@@ -235,6 +243,7 @@ export function getTimeTables(apiToken: string, date: Date): Promise<TimeTable> 
 				const lessons = lessonsByStudent[student.id];
 				lessons.sort((a, b) => a.nr - b.nr);
 				return {
+					studentName: studentName(student),
 					className: className(student, levelNames[lessons[0].group.level_id]),
 					subjects: lessons,
 				};

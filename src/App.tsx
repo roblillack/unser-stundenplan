@@ -11,8 +11,8 @@ interface MergedTimeTable {
 	date: string;
 	// True if the timetable is for today
 	isToday: boolean;
-	// List of class names
-	classNames: string[];
+	// One column per kid
+	columns: { studentName: string; className: string }[];
 	hours: {
 		hour: number;
 		time?: Time;
@@ -31,7 +31,7 @@ function mergeSubjectLists(dateStr: DateString, timetable: TimeTable): MergedTim
 	const r: MergedTimeTable = {
 		date: dateStr,
 		isToday: dateStr === formatDate(new Date()),
-		classNames: [],
+		columns: [],
 		hours: [],
 		lastHour: -1,
 		updated: new Date(),
@@ -43,7 +43,7 @@ function mergeSubjectLists(dateStr: DateString, timetable: TimeTable): MergedTim
 		(acc, tt) => tt.subjects.reduce((acc, x) => (x.nr > acc ? x.nr : acc), acc),
 		-1,
 	);
-	r.classNames = timetable.classes.map((x) => x.className);
+	r.columns = timetable.classes.map(({ studentName, className }) => ({ studentName, className }));
 
 	for (let i = 1; i <= r.lastHour; i++) {
 		const hour: { hour: number; time?: Time; subjects: (Lesson | null)[] } = {
@@ -235,7 +235,7 @@ function App() {
 		return () => clearInterval(h);
 	}, []);
 
-	const noSchoolFound = timetable && timetable.classNames.length === 0;
+	const noSchoolFound = timetable && timetable.columns.length === 0;
 	const isHolidayMode =
 		noSchoolFound ||
 		(timetable?.daysOff !== undefined && timetable?.daysOff >= SHOW_COUNTDOWN_DAYS);
@@ -287,9 +287,11 @@ function App() {
 								<thead>
 									<tr>
 										<th>Stunde</th>
-										{timetable?.classNames.map((x, idx) => (
+										{timetable?.columns.map((col, idx) => (
 											// biome-ignore lint/suspicious/noArrayIndexKey: columns are positional
-											<th key={`${idx}-${x}`}>{x}</th>
+											<th key={`${idx}-${col.studentName}`}>
+												{[col.studentName, col.className].filter(Boolean).join(" • ")}
+											</th>
 										))}
 									</tr>
 								</thead>
