@@ -37,6 +37,30 @@ export interface Subject {
 	tags: string[];
 }
 
+export interface Group {
+	id: number;
+	local_id: string;
+	name: string;
+	meta: number;
+	level_id: number;
+}
+
+export interface Student {
+	id: number;
+	forename: string;
+	nickname: string;
+	name: string;
+	birthday: string | null;
+	// All groups the student is part of: the class as well as every course
+	groups: Group[];
+	// The "main" group of the student, usually the class
+	meta_groups: Group[];
+}
+
+export interface StudentsReply {
+	data: Student[];
+}
+
 export interface Time {
 	id: number;
 	nr: number;
@@ -51,6 +75,10 @@ export interface Lesson {
 		id: number;
 		local_id: string;
 		level_id: number;
+		level?: {
+			id: number;
+			name: string;
+		};
 	};
 	subject: Subject;
 	status: "initial" | "canceled" | "hold" | "planned"; // WTF: Should be "cancelled" instead of "canceled"
@@ -105,6 +133,24 @@ export function get<T>(apiToken: string, path: string): Promise<T> {
 	});
 }
 
+export function getStudents(apiToken: string): Promise<Student[]> {
+	return get<StudentsReply>(apiToken, "students?include=groups").then((r) => r.data);
+}
+
+// The name of the class a student is in, e.g. "7/4". In the upper grades the
+// "main" group carries a qualifier we do not care about, like
+// "11DE3 - Tutorenkurs", which we strip down to "11DE3".
+function className(student: Student, levelName?: string): string {
+	for (const group of student.meta_groups) {
+		const name = group.local_id.split(/\s+[-–—]\s+/)[0].trim();
+		if (name) {
+			return name;
+		}
+	}
+
+	return levelName || student.nickname || student.forename;
+}
+
 export function getTimeTables(apiToken: string, date: Date): Promise<TimeTable> {
 	const startDate = new Date(date);
 	const maxDays = MAX_DAYS_OFF;
@@ -129,14 +175,22 @@ export function getTimeTables(apiToken: string, date: Date): Promise<TimeTable> 
 	// Helper function to process a single day from week data
 	const processDay = (
 		response: WeekJournalReply,
+		students: Student[],
 		checkDate: Date,
 	): { timetable: TimeTable | null; hasLessons: boolean; checkedDate: string } => {
-		const lessonsByLevel: Record<number, Lesson[]> = {};
-		const namesByLevel: Record<number, string> = {};
+		const lessonsByStudent: Record<number, Lesson[]> = {};
 		const timesByNumber: Record<number, Time> = {};
 		let notes: Notes[] = [];
 		const dateStr = formatDate(checkDate);
 		let hasLessons = false;
+
+		const groupsByStudent: Record<number, Set<number>> = {};
+		for (const student of students) {
+			groupsByStudent[student.id] = new Set(student.groups.map((x) => x.id));
+		}
+
+		// Level names as reported by the API, keyed by level id
+		const levelNames: Record<number, string> = {};
 
 		for (const day of response.data.days) {
 			if (day.date !== dateStr) {
@@ -145,29 +199,26 @@ export function getTimeTables(apiToken: string, date: Date): Promise<TimeTable> 
 			if (day.notes) {
 				notes = day.notes;
 			}
-			if (day.lessons && day.lessons.length > 0) {
-				hasLessons = true;
-			}
 			for (const lesson of day.lessons) {
-				lessonsByLevel[lesson.group.level_id] = lessonsByLevel[lesson.group.level_id] || [];
-				lessonsByLevel[lesson.group.level_id].push(lesson);
-
-				if (namesByLevel[lesson.group.level_id] === undefined) {
-					namesByLevel[lesson.group.level_id] = lesson.group.local_id;
-				} else {
-					// find common prefix to determine class name
-					let common = "";
-					for (let i = 0; i < lesson.group.local_id.length; i++) {
-						if (lesson.group.local_id[i] === namesByLevel[lesson.group.level_id][i]) {
-							common += lesson.group.local_id[i];
-						} else {
-							break;
-						}
-					}
-					namesByLevel[lesson.group.level_id] = common;
+				if (lesson.group.level?.name) {
+					levelNames[lesson.group.level_id] = lesson.group.level.name;
 				}
-				if (!timesByNumber[lesson.nr]) {
-					timesByNumber[lesson.nr] = lesson.time;
+
+				for (const student of students) {
+					// The journal contains the lessons of the whole year level, so it
+					// also lists all the parallel courses the student is *not* part of.
+					// Only keep the ones taking place in one of the student's groups.
+					if (!groupsByStudent[student.id].has(lesson.group.id)) {
+						continue;
+					}
+
+					hasLessons = true;
+					lessonsByStudent[student.id] = lessonsByStudent[student.id] || [];
+					lessonsByStudent[student.id].push(lesson);
+
+					if (!timesByNumber[lesson.nr]) {
+						timesByNumber[lesson.nr] = lesson.time;
+					}
 				}
 			}
 		}
@@ -176,14 +227,18 @@ export function getTimeTables(apiToken: string, date: Date): Promise<TimeTable> 
 			return { timetable: null, hasLessons: false, checkedDate: dateStr };
 		}
 
-		const classes: SubjectList[] = [];
-		for (const level in lessonsByLevel) {
-			lessonsByLevel[level].sort((a, b) => a.nr - b.nr);
-			classes.push({
-				className: namesByLevel[level],
-				subjects: lessonsByLevel[level],
+		const classes: SubjectList[] = students
+			.filter((student) => lessonsByStudent[student.id]?.length > 0)
+			// Youngest kid gets the first column
+			.sort((a, b) => (b.birthday || "").localeCompare(a.birthday || ""))
+			.map((student) => {
+				const lessons = lessonsByStudent[student.id];
+				lessons.sort((a, b) => a.nr - b.nr);
+				return {
+					className: className(student, levelNames[lessons[0].group.level_id]),
+					subjects: lessons,
+				};
 			});
-		}
 
 		return {
 			timetable: {
@@ -198,6 +253,9 @@ export function getTimeTables(apiToken: string, date: Date): Promise<TimeTable> 
 
 	// Search for the next school day with lessons
 	return (async () => {
+		// Which lessons are relevant depends on the groups our kids are in
+		const students = await getStudents(apiToken);
+
 		const searchDate = new Date(startDate);
 		let daysChecked = 0;
 
@@ -205,7 +263,7 @@ export function getTimeTables(apiToken: string, date: Date): Promise<TimeTable> 
 			// Skip weekends
 			if (searchDate.getDay() !== 0 && searchDate.getDay() !== 6) {
 				const weekData = await fetchWeekData(searchDate);
-				const result = processDay(weekData, searchDate);
+				const result = processDay(weekData, students, searchDate);
 
 				if (result.hasLessons && result.timetable) {
 					// Calculate days off (including weekends)
@@ -227,7 +285,7 @@ export function getTimeTables(apiToken: string, date: Date): Promise<TimeTable> 
 
 		// If no school day found in 3 weeks, return the original date anyway
 		const weekData = await fetchWeekData(startDate);
-		const result = processDay(weekData, startDate);
+		const result = processDay(weekData, students, startDate);
 		return (
 			result.timetable || {
 				times: {},

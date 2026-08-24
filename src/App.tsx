@@ -51,11 +51,9 @@ function mergeSubjectLists(dateStr: DateString, timetable: TimeTable): MergedTim
 			time: timetable.times[i],
 			subjects: [],
 		};
-		for (const className of r.classNames) {
-			const tt = timetable.classes.find((x) => x.className === className);
-			if (!tt) {
-				continue;
-			}
+		// One column per kid -- indexed by position, as two of them might well
+		// end up being in the same class.
+		for (const tt of timetable.classes) {
 			hour.subjects.push(tt.subjects.find((x) => x.nr === i) || null);
 		}
 		r.hours.push(hour);
@@ -289,8 +287,9 @@ function App() {
 								<thead>
 									<tr>
 										<th>Stunde</th>
-										{timetable?.classNames.map((x) => (
-											<th key={x}>{x}</th>
+										{timetable?.classNames.map((x, idx) => (
+											// biome-ignore lint/suspicious/noArrayIndexKey: columns are positional
+											<th key={`${idx}-${x}`}>{x}</th>
 										))}
 									</tr>
 								</thead>
@@ -311,7 +310,7 @@ function App() {
 											{hour.subjects.map((subject, idx) => (
 												<td
 													className={`subject ${subject?.status === "canceled" ? "cancelled" : ""}`}
-													key={`${timetable?.classNames[idx]}-${hour.hour}`}
+													key={`${idx}-${hour.hour}`}
 												>
 													{subject && (
 														<>
