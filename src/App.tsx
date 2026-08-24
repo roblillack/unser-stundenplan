@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ApiError, getTimeTables, type Lesson, type Time, type TimeTable } from "./api";
 import { REFRESH_INTERVAL_MS, RELOAD_INTERVAL_MS, SHOW_COUNTDOWN_DAYS } from "./contants";
 import { type DateString, formatDate, nextValidDate } from "./dates";
+import { reloadIfOutdated } from "./version";
 
 import "./App.css";
 
@@ -258,6 +259,13 @@ function App() {
 		return () => clearInterval(h);
 	}, []);
 
+	useEffect(() => {
+		// Deliberately not tied to the timetable updates above: those are paused
+		// during the holidays, but we still want to pick up new code.
+		const h = setInterval(reloadIfOutdated, REFRESH_INTERVAL_MS);
+		return () => clearInterval(h);
+	}, []);
+
 	const noSchoolFound = timetable && timetable.columns.length === 0;
 	const isHolidayMode =
 		noSchoolFound ||
@@ -311,7 +319,6 @@ function App() {
 									<tr>
 										<th>Stunde</th>
 										{timetable?.columns.map((col, idx) => (
-											// biome-ignore lint/suspicious/noArrayIndexKey: columns are positional
 											<th key={`${idx}-${col.studentName}`}>
 												{col.studentName}
 												{col.studentName && col.className && (
