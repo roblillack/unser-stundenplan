@@ -72,6 +72,17 @@ function mergeSubjectLists(dateStr: DateString, timetable: TimeTable): MergedTim
 	return r;
 }
 
+// Join the notes for display. A lone note following a heading -- like the
+// "Hinweise:" every substitution plan starts with -- gets a space instead of a
+// bullet, as there is nothing to separate it from.
+function joinNotes(notes: string[]): string {
+	if (notes.length === 2 && notes[0].endsWith(":")) {
+		return `${notes[0]} ${notes[1]}`;
+	}
+
+	return notes.join(" • ");
+}
+
 // Lessons the API flags as "planned" are not part of the regular timetable:
 // they come from the "Vertretungsplan".
 function subjectClassName(subject: Lesson | null): string {
@@ -351,7 +362,7 @@ function App() {
 							</table>
 						)}
 						{timetable && timetable.notes.length > 0 && (
-							<p className="notes">{timetable.notes.map((x) => x.trim()).join(" • ")}</p>
+							<p className="notes">{joinNotes(timetable.notes)}</p>
 						)}
 					</>
 				)}
