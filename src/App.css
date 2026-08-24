@@ -95,6 +95,10 @@ h2.holidays span {
 			font-size: 1em;
 		}
 
+		.separator {
+			color: #aaa;
+		}
+
 		&.cancelled {
 			color: #888888;
 			background-color: #eeeeee;

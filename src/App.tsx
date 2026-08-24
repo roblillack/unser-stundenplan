@@ -313,7 +313,11 @@ function App() {
 										{timetable?.columns.map((col, idx) => (
 											// biome-ignore lint/suspicious/noArrayIndexKey: columns are positional
 											<th key={`${idx}-${col.studentName}`}>
-												{[col.studentName, col.className].filter(Boolean).join(" • ")}
+												{col.studentName}
+												{col.studentName && col.className && (
+													<span className="separator"> – </span>
+												)}
+												{col.className}
 											</th>
 										))}
 									</tr>
