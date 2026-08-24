@@ -99,6 +99,11 @@ h2.holidays span {
 			color: #888888;
 			background-color: #eeeeee;
 		}
+
+		/* Not part of the regular timetable, e.g. a substitution */
+		&.substitution {
+			background-color: #fdf5cd;
+		}
 	}
 }
 

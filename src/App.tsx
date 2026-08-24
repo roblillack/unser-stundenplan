@@ -72,6 +72,18 @@ function mergeSubjectLists(dateStr: DateString, timetable: TimeTable): MergedTim
 	return r;
 }
 
+// Lessons the API flags as "planned" are not part of the regular timetable:
+// they come from the "Vertretungsplan".
+function subjectClassName(subject: Lesson | null): string {
+	if (subject?.status === "canceled") {
+		return "subject cancelled";
+	}
+	if (subject?.status === "planned") {
+		return "subject substitution";
+	}
+	return "subject";
+}
+
 function subjectName(subject: Lesson): string {
 	if (!subject.subject.name || subject.subject.name.length >= 15) {
 		return subject.subject.local_id;
@@ -311,7 +323,7 @@ function App() {
 											</td>
 											{hour.subjects.map((subject, idx) => (
 												<td
-													className={`subject ${subject?.status === "canceled" ? "cancelled" : ""}`}
+													className={subjectClassName(subject)}
 													key={`${idx}-${hour.hour}`}
 												>
 													{subject && (

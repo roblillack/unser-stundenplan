@@ -81,6 +81,8 @@ export interface Lesson {
 		};
 	};
 	subject: Subject;
+	// "planned" marks a lesson deviating from the regular timetable, i.e. a
+	// substitution from the "Vertretungsplan"
 	status: "initial" | "canceled" | "hold" | "planned"; // WTF: Should be "cancelled" instead of "canceled"
 	rooms: {
 		id: number;
