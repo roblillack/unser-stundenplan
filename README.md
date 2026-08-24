@@ -36,7 +36,8 @@ For the best experience:
 ## Features
 
 - Automatically finds the next school day (skips weekends and holidays)
-- Auto-refresh every 5 minutes to catch schedule changes
+- Auto-refresh every 7 minutes to catch schedule changes
+- Full page reload every 6 hours, and within 7 minutes of a new version being deployed
 - Holiday detection with countdown to next school day
 - Multi-child support (displays multiple class schedules side-by-side)
 - Shows daily notes and announcements
@@ -47,7 +48,7 @@ For the best experience:
 
 - **TypeScript** - Programming language
 - **Vite** - Build tool and dev server
-- **React 18** - UI framework
+- **React 19** - UI framework
 - **Biome** - Linting and formatting
 - **Vite Legacy Plugin** - Safari 15+ compatibility
 
@@ -102,7 +103,7 @@ Deployment is **completely automated** using Vercel:
 2. Vercel automatically detects the Vite configuration
 3. The app is built and deployed
 
-No Vercel configuration file needed! The platform auto-detects the build process from `package.json` and recognizes the standard Vite setup. Since this is a static frontend app, you can also host it on any static hosting service (GitHub Pages, Netlify, etc.).
+The build process is auto-detected from `package.json`, so `vercel.json` carries exactly one thing: a `Cache-Control: no-store` header for `/version.txt`. That file is written at build time and holds the commit the bundle was built from. The running app polls it and reloads itself once a new version is live, so a permanently open tab does not keep serving stale code. Since this is a static frontend app, you can also host it on any static hosting service (GitHub Pages, Netlify, etc.) -- just make sure `/version.txt` is served uncached there as well.
 
 ## License
 
