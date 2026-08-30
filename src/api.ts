@@ -15,11 +15,19 @@ export interface Day {
 }
 
 export interface Notes {
-	id: null;
-	for: "guardian";
-	source: "substitutionplan";
+	id: number | null;
+	// Day-level notes address the guardians, lesson-level ones the students
+	for: "guardian" | "student";
+	source: "substitutionplan" | "journal";
 	description: string;
-	notable_type: null;
+	notable_type: "lesson" | null;
+	// Only present on journal-sourced notes, e.g. "Thema" or "Hausaufgabe"
+	type?: {
+		id: number;
+		local_id: string | null;
+		name: string;
+		color: string | null;
+	};
 }
 
 export interface Teacher {
@@ -81,14 +89,22 @@ export interface Lesson {
 		};
 	};
 	subject: Subject;
-	// "planned" marks a lesson deviating from the regular timetable, i.e. a
-	// substitution from the "Vertretungsplan"
+	// Where the record came from: the regular timetable, an actual class
+	// register entry, or the "Vertretungsplan". Only interpolated responses
+	// carry this.
+	source?: "timetable" | "journal" | "substitutionplan";
+	// How far along the lesson is in the class register ("Klassenbuch"):
+	// initial -> planned -> hold ("gehalten"). Says nothing about whether the
+	// lesson deviates from the regular timetable -- see isSubstitution().
 	status: "initial" | "canceled" | "hold" | "planned"; // WTF: Should be "cancelled" instead of "canceled"
 	rooms: {
 		id: number;
 		local_id: string;
 	}[];
 	teachers: Teacher[];
+	// Annotations on the lesson. The ones from the "substitutionplan" carry the
+	// reason for a deviation, e.g. "Lk wird geschrieben" or "+ 11ma1".
+	notes?: Notes[];
 	time: Time;
 }
 

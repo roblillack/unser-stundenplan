@@ -84,13 +84,26 @@ function joinNotes(notes: string[]): string {
 	return notes.join(" • ");
 }
 
-// Lessons the API flags as "planned" are not part of the regular timetable:
-// they come from the "Vertretungsplan".
+// Whether a lesson deviates from the regular timetable, i.e. it turned up in
+// the "Vertretungsplan": either the record itself comes from there, or it
+// carries an annotation from it -- a stand-in teacher, a moved room, "Lk wird
+// geschrieben". Note that the lesson's `status` is no help here: it tracks the
+// class register (initial -> planned -> hold), not the substitution plan.
+function isSubstitution(subject: Lesson): boolean {
+	return (
+		subject.source === "substitutionplan" ||
+		(subject.notes || []).some((note) => note.source === "substitutionplan")
+	);
+}
+
 function subjectClassName(subject: Lesson | null): string {
-	if (subject?.status === "canceled") {
+	if (!subject) {
+		return "subject";
+	}
+	if (subject.status === "canceled") {
 		return "subject cancelled";
 	}
-	if (subject?.status === "planned") {
+	if (isSubstitution(subject)) {
 		return "subject substitution";
 	}
 	return "subject";
